@@ -45,10 +45,27 @@ namespace collision_checking {
 	private:
 		
 		/**
-		 * Execute the collision checking benchmark
+		 * Parse parameters and execute the appropriate test
 		 */
 		bool RunBenchmark(std::ostream &out, std::istream &in);
+		/**
+		 * Execute the collision checking benchmark
+		 */
+		bool RunCollisionBenchmark();
 
+		/**
+		 * Execute the self collision checking benchmark
+		 */
+		bool RunSelfCollisionBenchmark();
+
+		std::string _body_name;
+		OpenRAVE::KinBodyPtr _body;
+
+		double _duration;
+		double _extent;
+
+		bool _record;
+		std::string _outfile;
 	};
 }
 

@@ -18,18 +18,33 @@ if __name__ == '__main__':
                         help="The duration to run the benchmark. Poses will be sampled and collision checks will be run until the total time spent collision checking exceeds this duration.")
     parser.add_argument("--extent", type=float, default=2.0,
                         help="The edge length for the cube from which poses will be sampled.")
+    parser.add_argument("--engine", type=str, default="ode",
+                        help="The underlying physics engine to use for collision checking (options: ode, bullett, pqp)")
+    parser.add_argument("--self", action='store_true',
+                        help="If true, run self collision checks instead of environment collision checks")
+    parser.add_argument("--viewer", type=str, default=None,
+                        help="The viewer to attach to the environment")
+
 
     args = parser.parse_args()
 
     # Load the environment
     if args.body == 'herb':
-        env, robot = herbpy.initialize(sim=True)
+        env, robot = herbpy.initialize(sim=True, attach_viewer=args.viewer)
     else:
         env = openravepy.Environment()
 
     if args.env:
+        print args.env
         env.Load(args.env)
         
+    # Set the collision checker
+    cc = openravepy.RaveCreateCollisionChecker(env, args.engine)
+    if cc is None:
+        print 'Invalid collision engine. Failing.'
+        exit(0)
+    env.SetCollisionChecker(cc)
+
     # Verify the kinbody is in the environment
     body = env.GetKinBody(args.body)
     if body is None:
@@ -48,5 +63,14 @@ if __name__ == '__main__':
     if args.outfile is not None:
         params['outfile'] = args.outfile
     params['extent'] = args.extent
+    if args.self:
+        params['self'] = True
 
     result = module.SendCommand("Run " + str(params))
+
+    # Generate plots
+    if args.outfile:
+        print 'Generating plots'
+        with open(args.outfile, 'r') as f:
+            data = yaml.load(f)
+
