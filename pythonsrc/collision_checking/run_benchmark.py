@@ -14,8 +14,8 @@ if __name__ == '__main__':
                         help="The kinbody to move around for collision checking")
     parser.add_argument("--test", type=str, default=None,
                         help="The list of poses to check, this should be in the form of a results file from a previous run")
-    parser.add_argument("--duration", type=float, default=5.0,
-                        help="The duration to run the benchmark. Poses will be sampled and collision checks will be run until the total time spent collision checking exceeds this duration.")
+    parser.add_argument("--random", type=int, default=50000,
+                        help="The number of random poses to check. This will be ignored if the test parameters is set.")
     parser.add_argument("--extent", type=float, default=2.0,
                         help="The edge length for the cube from which poses will be sampled.")
     parser.add_argument("--engine", type=str, default="ode",
@@ -59,18 +59,16 @@ if __name__ == '__main__':
     # Generate the parameters
     params = {}
     params['body'] = str(body.GetName())
-    params['duration'] = args.duration
+    params['random'] = args.random
     if args.outfile is not None:
         params['outfile'] = args.outfile
     params['extent'] = args.extent
     if args.self:
         params['self'] = True
+    if args.test:
+        params['datafile'] = args.test
 
     result = module.SendCommand("Run " + str(params))
 
-    # Generate plots
-    if args.outfile:
-        print 'Generating plots'
-        with open(args.outfile, 'r') as f:
-            data = yaml.load(f)
-
+        
+            
