@@ -1,31 +1,34 @@
 #!/usr/bin/env python
-package_name='collision_checking'
-import roslib; roslib.load_manifest(package_name)
-import argparse, herbpy, openravepy
+import argparse, herbpy, openravepy, os
+
+# Thanks to Chris Dellin for this nice hack. :-)
+if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
+    package_name='collision_checking'
+    import roslib; roslib.load_manifest(package_name)
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser(description="Run the benchmark tests")
     parser.add_argument("--outfile", type=str, default=None,
-                        help="The output file to save results in, if none results are not saved")
+        help="The output file to save results in, if none results are not saved")
     parser.add_argument("--env", type=str, default=None,
-                        help="The environment to load")
+        help="The environment to load")
     parser.add_argument("--body", type=str, default="herb",
-                        help="The kinbody to move around for collision checking")
+        help="The kinbody to move around for collision checking")
     parser.add_argument("--test", type=str, default=None,
-                        help="The list of poses to check, this should be in the form of a results file from a previous run")
+        help="The list of poses to check, this should be in the form of a"
+             " results file from a previous run")
     parser.add_argument("--random", type=int, default=50000,
-                        help="The number of random poses to check. This will be ignored if the test parameters is set.")
+        help="The number of random poses to check. This will be ignored if the"
+             " test parameters is set.")
     parser.add_argument("--extent", type=float, default=2.0,
-                        help="The edge length for the cube from which poses will be sampled.")
+        help="The edge length for the cube from which poses will be sampled.")
     parser.add_argument("--engine", type=str, default="ode",
-                        help="The underlying physics engine to use for collision checking (options: ode, bullett, pqp)")
+        help="The underlying physics engine to use for collision checking")
     parser.add_argument("--self", action='store_true',
-                        help="If true, run self collision checks instead of environment collision checks")
+        help="If true, run self collision checks instead of environment"
+             " collision checks")
     parser.add_argument("--viewer", type=str, default=None,
-                        help="The viewer to attach to the environment")
-
-
+        help="The viewer to attach to the environment")
     args = parser.parse_args()
 
     # Load the environment
@@ -41,20 +44,21 @@ if __name__ == '__main__':
     # Set the collision checker
     cc = openravepy.RaveCreateCollisionChecker(env, args.engine)
     if cc is None:
-        print 'Invalid collision engine. Failing.'
-        exit(0)
+        raise Exception('Invalid collision engine. Failing.')
     env.SetCollisionChecker(cc)
 
     # Verify the kinbody is in the environment
     body = env.GetKinBody(args.body)
     if body is None:
-        raise Exception('No body with name %s in environment. Failing.' % args.body)
+        raise Exception('No body with name %s in environment. Failing.'
+                        % args.body)
 
     # Load the openrave module
     try:
         module = openravepy.RaveCreateModule(env, 'collisioncheckingbenchmark')
     except openravepy.openrave_exception:
-        raise Exception('Unable to load CollisionCheckingBenchmark module. Check your OPENRAVE_PLUGINS environment variable.')
+        raise Exception('Unable to load CollisionCheckingBenchmark module.'
+                        ' Check your OPENRAVE_PLUGINS environment variable.')
 
     # Generate the parameters
     params = {}
@@ -69,6 +73,3 @@ if __name__ == '__main__':
         params['datafile'] = args.test
 
     result = module.SendCommand("Run " + str(params))
-
-        
-            

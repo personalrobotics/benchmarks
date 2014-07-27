@@ -5,8 +5,18 @@ catkin_package()
 
 find_package(OpenRAVE REQUIRED)
 
-include_directories(${OpenRAVE_INCLUDE_DIRS})
-link_directories(${OpenRAVE_LIBRARY_DIRS})
+include(FindPkgConfig)
+pkg_check_modules(YamlCpp REQUIRED yaml-cpp)
+
+include_directories(
+    "include/"
+    ${OpenRAVE_INCLUDE_DIRS}
+    ${YamlCpp_INCLUDE_DIRS}
+)
+link_directories(
+    ${OpenRAVE_LIBRARY_DIRS}
+    ${YamlCpp_LIBRARY_DIRS}
+)
 
 # OpenRAVE plugin.
 add_library("${PROJECT_NAME}_plugin" SHARED
@@ -15,6 +25,7 @@ add_library("${PROJECT_NAME}_plugin" SHARED
 )
 target_link_libraries("${PROJECT_NAME}_plugin"
     ${OpenRAVE_LIBRARIES}
+    ${YamlCpp_LIBRARIES}
 )
 set_target_properties("${PROJECT_NAME}_plugin" PROPERTIES
     PREFIX ""
@@ -25,4 +36,7 @@ set_target_properties("${PROJECT_NAME}_plugin" PROPERTIES
 
 install(TARGETS "${PROJECT_NAME}_plugin"
     LIBRARY DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}/openrave-${OpenRAVE_LIBRARY_SUFFIX}"
+)
+install(PROGRAMS "scripts/run_benchmark.py"
+     DESTINATION "${CATKIN_PACKAGE_BIN_DESTINATION}"
 )
