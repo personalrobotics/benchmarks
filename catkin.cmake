@@ -47,6 +47,7 @@ add_executable(run_moveit_benchmark
 )
 target_link_libraries(run_moveit_benchmark
     ${catkin_LIBRARIES}
+    ${YamlCpp_LIBRARIES}
 )
 
 # Installation.

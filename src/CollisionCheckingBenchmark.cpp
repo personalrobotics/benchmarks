@@ -214,16 +214,19 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
-		emitter << YAML::BeginMap;
-		emitter << YAML::Key << "elapsed" << YAML::Value << total_time;
-		emitter << YAML::Key << "checks" << YAML::Value << data.size();
-		emitter << YAML::Key << "data" << YAML::Value;
-		emitter << YAML::BeginSeq;
+		emitter << YAML::BeginMap
+		        << YAML::Key << "elapsed" << YAML::Value << total_time
+		        << YAML::Key << "checks" << YAML::Value << data.size()
+                << YAML::Key << "names" << YAML::Value
+                << YAML::Key << "data" << YAML::Value
+		        << YAML::BeginSeq;
+
 		BOOST_FOREACH(CollisionData pt, collision_data){
 			emitter << pt;
 		}
-		emitter << YAML::EndSeq;
-		emitter << YAML::EndMap;
+
+		emitter << YAML::EndSeq
+		        << YAML::EndMap;
 		
 		std::ofstream out_stream(_outfile.c_str(), std::ofstream::binary);
 		out_stream << emitter.c_str();
@@ -271,16 +274,26 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
-		emitter << YAML::BeginMap;
-		emitter << YAML::Key << "elapsed" << YAML::Value << total_time;
-		emitter << YAML::Key << "checks" << YAML::Value << data.size();
-		emitter << YAML::Key << "data" << YAML::Value;
-		emitter << YAML::BeginSeq;
+		emitter << YAML::BeginMap
+		        << YAML::Key << "elapsed" << YAML::Value << total_time
+		        << YAML::Key << "checks" << YAML::Value << data.size()
+                << YAML::Key << "names" << YAML::Value
+                << YAML::BeginSeq;               
+
+        BOOST_FOREACH (OpenRAVE::KinBody::JointPtr const &joint, _body->GetJoints()) {
+            emitter << joint->GetName();
+        }
+
+        emitter << YAML::EndSeq
+		        << YAML::Key << "data" << YAML::Value
+		        << YAML::BeginSeq;
+
 		BOOST_FOREACH(SelfCollisionData pt, collision_data){
 			emitter << pt;
 		}
-		emitter << YAML::EndSeq;
-		emitter << YAML::EndMap;
+
+		emitter << YAML::EndSeq
+		        << YAML::EndMap;
 		
 		std::ofstream out_stream(_outfile.c_str(), std::ofstream::binary);
 		out_stream << emitter.c_str();
