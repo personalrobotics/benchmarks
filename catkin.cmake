@@ -27,8 +27,10 @@ link_directories(
 
 # OpenRAVE plugin.
 add_library("${PROJECT_NAME}_plugin" SHARED
+    src/BenchmarksModule.cpp
     src/CollisionCheckingBenchmark.cpp
-    src/CollisionCheckingModule.cpp
+    src/DataUtils.cpp
+    src/KinematicBenchmarks.cpp
 )
 target_link_libraries("${PROJECT_NAME}_plugin"
     ${OpenRAVE_LIBRARIES}
