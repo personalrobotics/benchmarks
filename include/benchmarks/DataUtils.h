@@ -45,6 +45,14 @@ namespace benchmarks {
 									 double &mean,
 									 double &mean_sq_dist,
 									 const unsigned int &n);
+
+		/**
+		 * Compute the number of milliseconds between the given start and end time
+		 * @param start The start time
+		 * @param end The end time
+		 * @return The elapsed time, in milliseconds
+		 */
+		static double ComputeElapsedMilliseconds(const struct timeval &start, const struct timeval &end);
 	};
 }
 

@@ -58,8 +58,10 @@ if __name__ == '__main__':
     if args.type=='fk':
     	result = module.SendCommand("RunForwardKinematics " + str(params))
     elif args.type=='jacobian':
-    	result = module.SendCommand("RunTranslationalJacobian " + str(params))
-    	result = module.SendCommand("RunRotationalJacobian " + str(params))
+    	result = module.SendCommand("RunJacobian " + str(params))
+    else:
+        print 'Unknown type options. Valid choices are: fk or jacobian.'
+        
 
         
             

@@ -98,3 +98,11 @@ double DataUtils::UpdateVariance(const double &data_pt,
 	return (mean_sq_dist / (n - 1.0));
 }
 
+double DataUtils::ComputeElapsedMilliseconds(const struct timeval &start, const struct timeval &end) {
+
+	float elapsed_s = end.tv_sec - start.tv_sec;
+	float elapsed_us = end.tv_usec - start.tv_usec;
+	float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
+	
+	return elapsed_ms;
+}

@@ -15,10 +15,8 @@ KinematicBenchmarks::KinematicBenchmarks(OpenRAVE::EnvironmentBasePtr env)
 
 	RegisterCommand("RunForwardKinematics", boost::bind(&KinematicBenchmarks::RunForwardKinematicsBenchmark, this, _1, _2),
 					"Run the FK benchmark test");
-	RegisterCommand("RunTranslationalJacobian", boost::bind(&KinematicBenchmarks::RunTranslationalJacobianBenchmark, this, _1, _2),
-					"Run the translational jacobian benchmark test");
-	RegisterCommand("RunRotationalJacobian", boost::bind(&KinematicBenchmarks::RunRotationalJacobianBenchmark, this, _1, _2),
-					"Run the rotational jacobian benchmark test");
+	RegisterCommand("RunJacobian", boost::bind(&KinematicBenchmarks::RunJacobianBenchmark, this, _1, _2),
+					"Run the jacobian benchmark test");
 }
 
 KinematicBenchmarks::~KinematicBenchmarks() {
@@ -85,27 +83,32 @@ bool KinematicBenchmarks::RunForwardKinematicsBenchmark(std::ostream &out, std::
 	_robot->GetActiveDOFLimits(lower, upper);
 	std::vector<std::vector<double> > iks = DataUtils::GenerateRandomConfigurations(_num_samples, lower, upper);
 
-	double total_time = 0.0;
+	double dof_time = 0.0;
+	double ee_time = 0.0;
 	BOOST_FOREACH(std::vector<double> ik, iks){
 		
 		// Check collision
 		struct timeval start, end;
 		gettimeofday(&start, NULL);
 		_robot->SetActiveDOFValues(ik);
+		gettimeofday(&end, NULL);
+		dof_time += DataUtils::ComputeElapsedMilliseconds(start, end);
+		
+		gettimeofday(&start, NULL);
 	    _manip->GetEndEffectorTransform();
 		gettimeofday(&end, NULL);
-		
-		float elapsed_s = end.tv_sec - start.tv_sec;
-		float elapsed_us = end.tv_usec - start.tv_usec;
-		float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
-		total_time += elapsed_ms;
+		ee_time += DataUtils::ComputeElapsedMilliseconds(start, end);
 	}
 
+	double total_time = ee_time + dof_time;
 	if(_record){
 		RAVELOG_INFO("[KinematicBenchmarks] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
 		emitter << YAML::BeginMap;
 		emitter << YAML::Key << "elapsed_ms" << YAML::Value << total_time;
+		emitter << YAML::Key << "dof_elapsed_ms" << YAML::Value << dof_time;
+		emitter << YAML::Key << "ee_elapsed_ms" << YAML::Value << ee_time;
+		
 		emitter << YAML::Key << "checks" << YAML::Value << iks.size();
 		emitter << YAML::EndMap;
 		
@@ -115,18 +118,22 @@ bool KinematicBenchmarks::RunForwardKinematicsBenchmark(std::ostream &out, std::
 	}
 
 	total_time /= 1000.0; // swith to seconds for reporting
+	dof_time /= 1000.0;
+	ee_time /= 1000.0;
 	RAVELOG_INFO("[KinematicBenchmarks] Results for FK benchmark:\n");
 	RAVELOG_INFO("\tTotal collision checks: %d\n",iks.size());
 	RAVELOG_INFO("\tTotal elapsed time: %0.5f\n", total_time);
 	RAVELOG_INFO("\tAverage time per check: %0.7f\n", total_time/iks.size());
 	RAVELOG_INFO("\tAverage checks per second: %0.2f\n", iks.size()/total_time);
+	RAVELOG_INFO("\tAverage calls to SetDOFValues per second: %0.2f\n", iks.size()/dof_time);
+	RAVELOG_INFO("\tAverage calls to GetEndEffectorTransform per second: %0.2f\n", iks.size()/ee_time);
 
 	return true;
 }
 
-bool KinematicBenchmarks::RunTranslationalJacobianBenchmark(std::ostream &out, std::istream &in){
+bool KinematicBenchmarks::RunJacobianBenchmark(std::ostream &out, std::istream &in){
 
-	RAVELOG_DEBUG("[KinematicBenchmarks] Running translational jacobian benchmark\n");
+	RAVELOG_DEBUG("[KinematicBenchmarks] Running jacobian benchmark\n");
 	bool success = ParseParameters(in);
 	if(!success){
 		RAVELOG_ERROR("[KinematicsBenchmarks] Error parsing input parameters.");
@@ -138,28 +145,36 @@ bool KinematicBenchmarks::RunTranslationalJacobianBenchmark(std::ostream &out, s
 	_robot->GetActiveDOFLimits(lower, upper);
 	std::vector<std::vector<double> > iks = DataUtils::GenerateRandomConfigurations(_num_samples, lower, upper);
 
-	double total_time = 0.0;
-	boost::multi_array<OpenRAVE::dReal, 2> Jtrans;
+
+	boost::multi_array<OpenRAVE::dReal, 2> jacob;
+	double trans_time = 0.0;
+	double rot_time = 0.0;
 	BOOST_FOREACH(std::vector<double> ik, iks){
 		
 		// Check collision
 		struct timeval start, end;
 		_robot->SetActiveDOFValues(ik);
 		gettimeofday(&start, NULL);
-		_manip->CalculateJacobian(Jtrans);
+		_manip->CalculateJacobian(jacob);
 		gettimeofday(&end, NULL);
+		trans_time += DataUtils::ComputeElapsedMilliseconds(start, end);
+
+		gettimeofday(&start, NULL);
+		_manip->CalculateAngularVelocityJacobian(jacob);
+		gettimeofday(&end, NULL);
+		rot_time += DataUtils::ComputeElapsedMilliseconds(start, end);
 		
-		float elapsed_s = end.tv_sec - start.tv_sec;
-		float elapsed_us = end.tv_usec - start.tv_usec;
-		float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
-		total_time += elapsed_ms;
 	}
+
+	double total_time = trans_time + rot_time;
 
 	if(_record){
 		RAVELOG_INFO("[KinematicBenchmarks] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
 		emitter << YAML::BeginMap;
 		emitter << YAML::Key << "elapsed_ms" << YAML::Value << total_time;
+		emitter << YAML::Key << "translational_ms" << YAML::Value << trans_time;
+		emitter << YAML::Key << "rotational_ms" << YAML::Value << rot_time;
 		emitter << YAML::Key << "checks" << YAML::Value << iks.size();
 		emitter << YAML::EndMap;
 		
@@ -169,65 +184,15 @@ bool KinematicBenchmarks::RunTranslationalJacobianBenchmark(std::ostream &out, s
 	}
 
 	total_time /= 1000.0; // swith to seconds for reporting
-	RAVELOG_INFO("[KinematicBenchmarks] Results for translational jacobian benchmark:\n");
+	trans_time /= 1000.0;
+	rot_time /= 1000.0;
+	RAVELOG_INFO("[KinematicBenchmarks] Results for jacobian benchmark:\n");
 	RAVELOG_INFO("\tTotal collision checks: %d\n",iks.size());
 	RAVELOG_INFO("\tTotal elapsed time: %0.5f\n", total_time);
 	RAVELOG_INFO("\tAverage time per check: %0.7f\n", total_time/iks.size());
 	RAVELOG_INFO("\tAverage checks per second: %0.2f\n", iks.size()/total_time);
-
-	return true;
-}
-
-bool KinematicBenchmarks::RunRotationalJacobianBenchmark(std::ostream &out, std::istream &in){
-
-	RAVELOG_DEBUG("[KinematicBenchmarks] Running rotational jacobian benchmark\n");
-	bool success = ParseParameters(in);
-	if(!success){
-		RAVELOG_ERROR("[KinematicsBenchmarks] Error parsing input parameters.");
-		return false;
-	}
-
-	std::vector<double> lower;
-	std::vector<double> upper;
-	_robot->GetActiveDOFLimits(lower, upper);
-	std::vector<std::vector<double> > iks = DataUtils::GenerateRandomConfigurations(_num_samples, lower, upper);
-
-	double total_time = 0.0;
-	boost::multi_array<OpenRAVE::dReal, 2> Jrot;
-	BOOST_FOREACH(std::vector<double> ik, iks){
-		
-		// Check collision
-		struct timeval start, end;
-		_robot->SetActiveDOFValues(ik);
-		gettimeofday(&start, NULL);
-		_manip->CalculateAngularVelocityJacobian(Jrot);
-		gettimeofday(&end, NULL);
-		
-		float elapsed_s = end.tv_sec - start.tv_sec;
-		float elapsed_us = end.tv_usec - start.tv_usec;
-		float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
-		total_time += elapsed_ms;
-	}
-
-	if(_record){
-		RAVELOG_INFO("[KinematicBenchmarks] Recording results to file %s\n", _outfile.c_str());
-		YAML::Emitter emitter;
-		emitter << YAML::BeginMap;
-		emitter << YAML::Key << "elapsed_ms" << YAML::Value << total_time;
-		emitter << YAML::Key << "checks" << YAML::Value << iks.size();
-		emitter << YAML::EndMap;
-		
-		std::ofstream out_stream(_outfile.c_str(), std::ofstream::binary);
-		out_stream << emitter.c_str();
-		out_stream.close();
-	}
-
-	total_time /= 1000.0; // swith to seconds for reporting
-	RAVELOG_INFO("[KinematicBenchmarks] Results for rotational jacobian benchmark:\n");
-	RAVELOG_INFO("\tTotal collision checks: %d\n",iks.size());
-	RAVELOG_INFO("\tTotal elapsed time: %0.5f\n", total_time);
-	RAVELOG_INFO("\tAverage time per check: %0.7f\n", total_time/iks.size());
-	RAVELOG_INFO("\tAverage checks per second: %0.2f\n", iks.size()/total_time);
-
+	RAVELOG_INFO("\tAverage translational jacobian calls per second: %0.2f\n", iks.size()/trans_time);
+	RAVELOG_INFO("\tAverage rotational jacobian calls per second: %0.2f\n", iks.size()/rot_time);
+	
 	return true;
 }

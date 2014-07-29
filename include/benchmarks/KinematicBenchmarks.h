@@ -42,14 +42,9 @@ namespace benchmarks {
 		bool RunForwardKinematicsBenchmark(std::ostream &out, std::istream &in);
 
 		/**
-		 * Execute the translational jacobian benchmark - sample an arm configuration and compute the translational jacobian
+		 * Execute the jacobian benchmark - sample an arm configuration and compute the translational and rotational jacobian
 		 */
-		bool RunTranslationalJacobianBenchmark(std::ostream &out, std::istream &in);
-
-		/**
-		 * Execute the rotational jacobian benchmark - sample an arm configuration and compute the rotational jacobian
-		 */
-		bool RunRotationalJacobianBenchmark(std::ostream &out, std::istream &in);
+		bool RunJacobianBenchmark(std::ostream &out, std::istream &in);
 
 		std::string _robot_name;
 		OpenRAVE::RobotBasePtr _robot;
