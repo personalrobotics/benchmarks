@@ -19,8 +19,10 @@ include_directories(${OpenRAVE_INCLUDE_DIRS})
 link_directories(${OpenRAVE_LIBRARY_DIRS})
 
 rosbuild_add_library(${PROJECT_NAME}
+  src/BenchmarksModule.cpp
   src/CollisionCheckingBenchmark.cpp
-  src/CollisionCheckingModule.cpp
+  src/DataUtils.cpp
+  src/KinematicBenchmarks.cpp
 )
 rosbuild_link_boost(${PROJECT_NAME} system)
 target_link_libraries(${PROJECT_NAME} yaml-cpp ${OpenRAVE_LIBRARIES})

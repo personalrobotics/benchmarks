@@ -3,7 +3,7 @@ import argparse, herbpy, openravepy, os
 
 # Thanks to Chris Dellin for this nice hack. :-)
 if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
-    package_name='collision_checking'
+    package_name='or_benchmarks'
     import roslib; roslib.load_manifest(package_name)
 
 if __name__ == '__main__':

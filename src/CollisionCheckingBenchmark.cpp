@@ -1,14 +1,17 @@
-#include <collision_checking/CollisionCheckingBenchmark.h>
+#include <benchmarks/CollisionCheckingBenchmark.h>
+#include <benchmarks/DataUtils.h>
 
 #include <boost/foreach.hpp>
 #include <boost/math/constants/constants.hpp>
 #include <boost/random.hpp>
 #include <boost/timer.hpp>
 
-using namespace collision_checking;
+#include <sys/time.h>
+
+using namespace benchmarks;
 
 CollisionCheckingBenchmark::CollisionCheckingBenchmark(OpenRAVE::EnvironmentBasePtr env) 
-	: ModuleBase(env), _extent(0.0), _num_samples(0), _record(false) {
+	: ModuleBase(env), _num_samples(0), _record(false) {
 
 	RegisterCommand("Run", boost::bind(&CollisionCheckingBenchmark::RunBenchmark, this, _1, _2),
 					"Run the benchmark test");
@@ -50,8 +53,10 @@ bool CollisionCheckingBenchmark::RunBenchmark(std::ostream &out, std::istream &i
 	}
 
 	if(const YAML::Node* pextent = doc.FindValue("extent")){
-		*pextent >> _extent;
-		RAVELOG_INFO("[CollisionCheckingBenchmark] Sampling poses from cube with extent %0.3f\n", _extent);
+		double extent;
+		*pextent >> extent;
+		_bounds.set(0, extent, 0, extent, 0, extent);
+		RAVELOG_INFO("[CollisionCheckingBenchmark] Sampling poses from cube with extent %0.3f\n", extent);
 	}else{
 		RAVELOG_ERROR("[CollisionCheckingBenchmark] Must specify extents of the area for pose sampling.\n");
 		return false;
@@ -74,34 +79,7 @@ std::vector<OpenRAVE::Transform> CollisionCheckingBenchmark::GenerateCollisionDa
 
 	std::vector<OpenRAVE::Transform> data;
 	if(_datafile.length() == 0){
-
-		// Setup random number generators
-		typedef boost::uniform_real<> NumberDistribution;
-		typedef boost::mt19937 RandomNumberGenerator;
-		typedef boost::variate_generator<RandomNumberGenerator&, NumberDistribution> Generator;
-
-		RandomNumberGenerator generator;
-		generator.seed(std::time(0));
-
-		NumberDistribution pos_distribution(0., _extent);
-		Generator pos_generator(generator, pos_distribution);
-
-		NumberDistribution ang_distribution(0., 2.*boost::math::constants::pi<double>());
-		Generator ang_generator(generator, ang_distribution);
-
-		RAVELOG_INFO("[CollisionCheckingBenchmark] Generating %d transforms\n", _num_samples);
-		for(unsigned int idx=0; idx < _num_samples; idx++){
-			OpenRAVE::Transform trans;
-			trans.trans.x = pos_generator();
-			trans.trans.y = pos_generator();
-			trans.trans.z = pos_generator();
-			
-			OpenRAVE::RaveVector<OpenRAVE::dReal> rand_axis_angle(ang_generator(), ang_generator(), ang_generator());
-			trans.rot = OpenRAVE::geometry::quatFromAxisAngle(rand_axis_angle);
-
-			data.push_back(trans);
-		}
-
+		data = DataUtils::GenerateRandomTransforms(_num_samples, _bounds);
 	}else{
 
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Loading transforms from file %s\n", _datafile.c_str());
@@ -120,7 +98,7 @@ std::vector<OpenRAVE::Transform> CollisionCheckingBenchmark::GenerateCollisionDa
 			data.push_back(pt.pt);
 		}
 
-		RAVELOG_INFO("[CollisionCheckingBenchmark] Laoded %d transforms\n", data.size());
+		RAVELOG_INFO("[CollisionCheckingBenchmark] Loaded %d transforms\n", data.size());
 	}
 
 	return data;
@@ -135,25 +113,7 @@ std::vector<std::vector<double> > CollisionCheckingBenchmark::GenerateSelfCollis
 		std::vector<OpenRAVE::dReal> upper;
 		_body->GetDOFLimits(lower, upper);
 		
-		typedef boost::uniform_real<> NumberDistribution;
-		typedef boost::mt19937 RandomNumberGenerator;
-		typedef boost::variate_generator<RandomNumberGenerator&, NumberDistribution> Generator;
-		
-		RandomNumberGenerator generator;
-		generator.seed(std::time(0));
-
-		RAVELOG_INFO("[CollisionCheckingBenchmark] Generating %d poses\n", _num_samples);
-		for(unsigned int idx=0; idx < _num_samples; idx++){
-			// Sample a random pose
-			std::vector<double> pose;
-			for(unsigned int idx=0; idx < lower.size(); idx++){
-				NumberDistribution distribution(lower[idx], upper[idx]);
-				Generator number_generator(generator, distribution);
-				pose.push_back(number_generator());
-			}
-			
-			data.push_back(pose);
-		}
+		data = DataUtils::GenerateRandomConfigurations(_num_samples, lower, upper);
 
 	}else{
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Loading poses from file %s\n", _datafile.c_str());
@@ -172,7 +132,7 @@ std::vector<std::vector<double> > CollisionCheckingBenchmark::GenerateSelfCollis
 			data.push_back(pt.pt);
 		}
 
-		RAVELOG_INFO("[CollisionCheckingBenchmark] Laoded %d poses\n", data.size());
+		RAVELOG_INFO("[CollisionCheckingBenchmark] Loaded %d poses\n", data.size());
 
 	}
 
@@ -184,6 +144,11 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 
 	// Grab data
 	std::vector<OpenRAVE::Transform> data = GenerateCollisionData();
+
+	// Initialize values for calculating variance online
+	double mean = 0.0;
+	double mean_sq_dist = 0.0;
+	double variance = 0.0;
 
 	double total_time = 0.0;
 	std::vector<CollisionData> collision_data;
@@ -198,41 +163,48 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 		_body->SetTransform(btrans);
 
 		// Check collision
-		boost::timer t;
+		struct timeval start, end;
+		gettimeofday(&start, NULL);
 		bool incollision = env->CheckCollision(_body);
-		float elapsed = t.elapsed();
-		total_time += elapsed;
+		gettimeofday(&end, NULL);
+
+		float elapsed_s = end.tv_sec - start.tv_sec;
+		float elapsed_us = end.tv_usec - start.tv_usec;
+		float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
+		total_time += elapsed_ms;
+
+		variance = DataUtils::UpdateVariance(elapsed_ms, mean, mean_sq_dist, idx+1);
 
 		if(incollision)
 			collisions++;
 
 		// Save the data
-		CollisionData pt(btrans, elapsed*1000.0, incollision);
+		CollisionData pt(btrans, elapsed_ms, incollision);
 		collision_data.push_back(pt);
 	}
 
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
-		emitter << YAML::BeginMap
-		        << YAML::Key << "elapsed" << YAML::Value << total_time
-		        << YAML::Key << "checks" << YAML::Value << data.size()
-                << YAML::Key << "names" << YAML::Value
-                << YAML::Key << "data" << YAML::Value
-		        << YAML::BeginSeq;
-
+		emitter << YAML::BeginMap;
+		emitter << YAML::Key << "elapsed_ms" << YAML::Value << total_time;
+		emitter << YAML::Key << "checks" << YAML::Value << data.size();
+		emitter << YAML::Key << "mean_ms" << YAML::Value << mean;
+		emitter << YAML::Key << "variance_ms" << YAML::Value << variance;
+		emitter << YAML::Key << "data" << YAML::Value;
+		emitter << YAML::BeginSeq;
 		BOOST_FOREACH(CollisionData pt, collision_data){
 			emitter << pt;
 		}
-
-		emitter << YAML::EndSeq
-		        << YAML::EndMap;
+		emitter << YAML::EndSeq;
+		emitter << YAML::EndMap;
 		
 		std::ofstream out_stream(_outfile.c_str(), std::ofstream::binary);
 		out_stream << emitter.c_str();
 		out_stream.close();
 	}
 
+	total_time /= 1000.0; // swith to seconds for reporting
 	RAVELOG_INFO("[CollisionCheckingBenchmark] Results:\n");
 	RAVELOG_INFO("\tTotal collision checks: %d\n",data.size());
 	RAVELOG_INFO("\tTotal collisions found: %d\n",collisions);
@@ -258,48 +230,44 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 		_body->SetDOFValues(pose);
 
 		// Check collision
-		boost::timer t;
+		struct timeval start, end;
+		gettimeofday(&start, NULL);
 		bool incollision = _body->CheckSelfCollision();
-		double elapsed = t.elapsed();
-		total_time += elapsed;
+		gettimeofday(&end, NULL);
+
+		float elapsed_s = end.tv_sec - start.tv_sec;
+		float elapsed_us = end.tv_usec - start.tv_usec;
+		float elapsed_ms = elapsed_s*1000.0 + elapsed_us/1000.0;
+		total_time += elapsed_ms;
 
 		if(incollision)
 			collisions++;
 
 		// Save the data
-		SelfCollisionData pt(pose, elapsed, incollision);
+		SelfCollisionData pt(pose, elapsed_ms, incollision);
 		collision_data.push_back(pt);
 	}
 
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());
 		YAML::Emitter emitter;
-		emitter << YAML::BeginMap
-		        << YAML::Key << "elapsed" << YAML::Value << total_time
-		        << YAML::Key << "checks" << YAML::Value << data.size()
-                << YAML::Key << "names" << YAML::Value
-                << YAML::BeginSeq;               
-
-        BOOST_FOREACH (OpenRAVE::KinBody::JointPtr const &joint, _body->GetJoints()) {
-            emitter << joint->GetName();
-        }
-
-        emitter << YAML::EndSeq
-		        << YAML::Key << "data" << YAML::Value
-		        << YAML::BeginSeq;
-
+		emitter << YAML::BeginMap;
+		emitter << YAML::Key << "elapsed_ms" << YAML::Value << total_time;
+		emitter << YAML::Key << "checks" << YAML::Value << data.size();
+		emitter << YAML::Key << "data" << YAML::Value;
+		emitter << YAML::BeginSeq;
 		BOOST_FOREACH(SelfCollisionData pt, collision_data){
 			emitter << pt;
 		}
-
-		emitter << YAML::EndSeq
-		        << YAML::EndMap;
+		emitter << YAML::EndSeq;
+		emitter << YAML::EndMap;
 		
 		std::ofstream out_stream(_outfile.c_str(), std::ofstream::binary);
 		out_stream << emitter.c_str();
 		out_stream.close();
 	}
 
+	total_time /= 1000.0;
 	RAVELOG_INFO("[CollisionCheckingBenchmark] Results:\n");
 	RAVELOG_INFO("\tTotal self collision checks: %d\n",data.size());
 	RAVELOG_INFO("\tTotal collisions found: %d\n",collisions);
