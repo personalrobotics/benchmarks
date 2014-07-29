@@ -33,12 +33,12 @@ namespace benchmarks {
 
 		/**
 		 * Set the bounds
-		 * @param xmin The minimum x value
-		 * @param xmax The maximum x value
-		 * @param ymin The minimum y value
-		 * @param ymax The maximum y value
-		 * @param zmin The minimum z value		 
-		 * @param zmax The maximum z value
+		 * @param x_min The minimum x value
+		 * @param x_max The maximum x value
+		 * @param y_min The minimum y value
+		 * @param y_max The maximum y value
+		 * @param z_min The minimum z value		 
+		 * @param z_max The maximum z value
 		 */
 		void set(const double &x_min, 
 				 const double &x_max,

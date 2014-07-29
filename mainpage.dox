@@ -2,13 +2,20 @@
 \mainpage
 \htmlinclude manifest.html
 
-\b collision_checking 
+\b or_benchmarks
 
-<!-- 
-Provide an overview of your package.
--->
+This package provides access to benchmarks for the OpenRAVE environment.
 
--->
+All benchmarks can be run from a python interface.
+
+To run collision checking benchmarks, use the following command:
+
+<code>
+rosrun or_benchmarks run_collision_benchmark.py
+</code>
+
+This will sample several poses (position and orientation) and check for collisions
+between the kinbody and any object in the OpenRAVE environment.
 
 
 */
