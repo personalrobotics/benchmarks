@@ -121,7 +121,7 @@ bool KinematicBenchmarks::RunForwardKinematicsBenchmark(std::ostream &out, std::
 	dof_time /= 1000.0;
 	ee_time /= 1000.0;
 	RAVELOG_INFO("[KinematicBenchmarks] Results for FK benchmark:\n");
-	RAVELOG_INFO("\tTotal collision checks: %d\n",iks.size());
+	RAVELOG_INFO("\tTotal queries: %d\n",iks.size());
 	RAVELOG_INFO("\tTotal elapsed time: %0.5f\n", total_time);
 	RAVELOG_INFO("\tAverage time per check: %0.7f\n", total_time/iks.size());
 	RAVELOG_INFO("\tAverage checks per second: %0.2f\n", iks.size()/total_time);
