@@ -4,6 +4,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/random.hpp>
 #include <boost/timer.hpp>
+#include <google/profiler.h>
 
 using namespace collision_checking;
 
@@ -189,6 +190,9 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 	std::vector<CollisionData> collision_data;
 	OpenRAVE::EnvironmentBasePtr env = GetEnv();
 	int collisions = 0;
+
+
+    ProfilerStart("google-profiler.prof");
 	for(unsigned int idx=0; idx < data.size(); idx++){
 
 		// Grab the next pose
@@ -210,6 +214,8 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 		CollisionData pt(btrans, elapsed*1000.0, incollision);
 		collision_data.push_back(pt);
 	}
+    ProfilerStop();
+
 
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());
@@ -251,6 +257,7 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 	std::vector<SelfCollisionData> collision_data;
 	int collisions = 0;
 
+    ProfilerStart("google-profiler.prof");
 	for(unsigned int idx=0; idx < data.size(); idx++){
 		std::vector<double> pose = data[idx];
 
@@ -270,6 +277,7 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 		SelfCollisionData pt(pose, elapsed, incollision);
 		collision_data.push_back(pt);
 	}
+    ProfilerStop();
 
 	if(_record){
 		RAVELOG_INFO("[CollisionCheckingBenchmark] Recording results to file %s\n", _outfile.c_str());

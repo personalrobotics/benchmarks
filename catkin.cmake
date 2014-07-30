@@ -31,6 +31,7 @@ add_library("${PROJECT_NAME}_plugin" SHARED
     src/CollisionCheckingModule.cpp
 )
 target_link_libraries("${PROJECT_NAME}_plugin"
+    profiler
     ${OpenRAVE_LIBRARIES}
     ${YamlCpp_LIBRARIES}
 )
