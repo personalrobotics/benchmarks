@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 catkin_package()
 
+find_package(Boost REQUIRED COMPONENTS program_options)
 find_package(OpenRAVE REQUIRED)
 
 include(FindPkgConfig)
@@ -15,11 +16,13 @@ pkg_check_modules(YamlCpp REQUIRED yaml-cpp)
 
 include_directories(
     "include/"
+    ${Boost_INCLUDE_DIRS}
     ${OpenRAVE_INCLUDE_DIRS}
     ${YamlCpp_INCLUDE_DIRS}
     ${catkin_INCLUDE_DIRS}
 )
 link_directories(
+    ${Boost_LIBRARY_DIRS}
     ${OpenRAVE_LIBRARY_DIRS}
     ${YamlCpp_LIBRARY_DIRS}
     ${catkin_LIBRARY_DIRS}
@@ -52,6 +55,16 @@ target_link_libraries(run_moveit_benchmark
     ${YamlCpp_LIBRARIES}
 )
 
+# Memory Leak
+add_executable(run_memory_leak
+    src/memory_leak.cpp
+)
+target_link_libraries(run_memory_leak
+    openrave${OpenRAVE_LIBRARY_SUFFIX}-core
+    ${Boost_LIBRARIES}
+    ${OpenRAVE_LIBRARIES}
+)
+
 # Installation.
 install(TARGETS "${PROJECT_NAME}_plugin"
     LIBRARY DESTINATION "${CATKIN_PACKAGE_LIB_DESTINATION}/openrave-${OpenRAVE_LIBRARY_SUFFIX}"
@@ -60,5 +73,5 @@ install(TARGETS run_moveit_benchmark
     RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 install(PROGRAMS "scripts/run_benchmark.py"
-     DESTINATION "${CATKIN_PACKAGE_BIN_DESTINATION}"
+    DESTINATION "${CATKIN_PACKAGE_BIN_DESTINATION}"
 )
