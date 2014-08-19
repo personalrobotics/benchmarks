@@ -43,6 +43,7 @@ if __name__ == '__main__':
         
     # Set the collision checker
     cc = openravepy.RaveCreateCollisionChecker(env, args.engine)
+    cc.SetCollisionOptions(0)
     if cc is None:
         raise Exception('Invalid collision engine. Failing.')
     env.SetCollisionChecker(cc)
@@ -72,4 +73,5 @@ if __name__ == '__main__':
     if args.test:
         params['datafile'] = args.test
 
-    result = module.SendCommand("Run " + str(params))
+    with env:
+        result = module.SendCommand("Run " + str(params))

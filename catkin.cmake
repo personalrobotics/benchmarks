@@ -36,6 +36,7 @@ add_library("${PROJECT_NAME}_plugin" SHARED
     src/KinematicBenchmarks.cpp
 )
 target_link_libraries("${PROJECT_NAME}_plugin"
+    profiler
     ${OpenRAVE_LIBRARIES}
     ${YamlCpp_LIBRARIES}
 )
@@ -44,6 +45,20 @@ set_target_properties("${PROJECT_NAME}_plugin" PROPERTIES
     COMPILE_FLAGS "${OpenRAVE_CXX_FLAGS}"
     LINK_FLAGS "${OpenRAVE_LINK_FLAGS}"
     LIBRARY_OUTPUT_DIRECTORY "${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_LIB_DESTINATION}/openrave-${OpenRAVE_LIBRARY_SUFFIX}"
+)
+
+# Profiling benchmark.
+add_executable(run_profiler
+    src/run_benchmark.cpp
+    src/DataUtils.cpp
+)
+target_link_libraries(run_profiler
+    profiler
+    ${Boost_LIBRARIES}
+    ${catkin_LIBRARIES}
+    ${YamlCpp_LIBRARIES}
+    openrave0.9-core
+    ${OpenRAVE_LIBRARIES}
 )
 
 # MoveIt plugin.

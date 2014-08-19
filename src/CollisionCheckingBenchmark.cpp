@@ -5,6 +5,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/random.hpp>
 #include <boost/timer.hpp>
+#include <google/profiler.h>
 
 #include <sys/time.h>
 
@@ -154,6 +155,7 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 	std::vector<CollisionData> collision_data;
 	OpenRAVE::EnvironmentBasePtr env = GetEnv();
 	int collisions = 0;
+
 	for(unsigned int idx=0; idx < data.size(); idx++){
 
 		// Grab the next pose
@@ -165,7 +167,11 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 		// Check collision
 		struct timeval start, end;
 		gettimeofday(&start, NULL);
+
+        //ProfilerStart("CheckCollision");
 		bool incollision = env->CheckCollision(_body);
+        //ProfilerStop();
+
 		gettimeofday(&end, NULL);
 
 		float elapsed_s = end.tv_sec - start.tv_sec;
@@ -232,7 +238,9 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 		// Check collision
 		struct timeval start, end;
 		gettimeofday(&start, NULL);
+
 		bool incollision = _body->CheckSelfCollision();
+
 		gettimeofday(&end, NULL);
 
 		float elapsed_s = end.tv_sec - start.tv_sec;
