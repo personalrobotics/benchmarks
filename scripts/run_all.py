@@ -6,6 +6,7 @@ package_name='or_benchmarks'
 import roslib; roslib.load_manifest(package_name)
 import prpy; prpy.dependency_manager.export(package_name)
 
+import os
 from rospkg import RosPack
 from run_collision_benchmark import *
 from analyze import *
@@ -53,31 +54,32 @@ if __name__ == '__main__':
 
     # Self collision
     self_collision_data = run_self_collision(args.engines)
-    outfile = 'self_collision.pdf'
+    outfile = 'self_collision.png'
     analyze(self_collision_data, title='Self Collision', outfile=outfile)
     print 'Saved self collision results to %s' % outfile
 
     # Empty envirnment
     empty_collision_data = run_environment_collision(args.engines)
-    outfile = 'emtpy_env_collision.pdf'
+    outfile = 'empty_env_collision.png'
     analyze(empty_collision_data, title='Empty Environment Collisions', outfile=outfile)
     print 'Saved empty environment results to %s' % outfile
 
     # Intel kitceen
     rp = RosPack()
-    kitchen_env = rp.get_path('pr_ordata') + 'ordata/environments/intelkitchen.env.xml'
-    outfile = 'intel_collision.pdf'
+    kitchen_env = os.path.join(rp.get_path('pr_ordata'), 'ordata', 'environments', 'intelkitchen.env.xml')
+    outfile = 'intel_collision.png'
     kitchen_collision_data = run_environment_collision(args.engines, kitchen_env, 'kitchen')
-    analyze(kitchen_collision_data, title='Intel Kitchen Environment')
+    analyze(kitchen_collision_data, title='Intel Kitchen Environment', outfile=outfile)
     print 'Saved intel kitchen results to %s' % outfile
 
     # pr kitchen
     rp = RosPack()
-    kitchen_env = rp.get_path('pr_kitchen') + 'ordata/pr_kitchen.env.xml'
+    kitchen_env = os.path.join(rp.get_path('pr_kitchen'),'ordata','pr_kitchen.env.xml')
     kitchen_collision_data = run_environment_collision(args.engines, kitchen_env, 'kitchen')
-    outfile = 'prkitchen_collision.pdf'
-    analyze(kitchen_collision_data, title='PR Kitchen Environment')
+    outfile = 'prkitchen_collision.png'
+    analyze(kitchen_collision_data, title='PR Kitchen Environment', outfile=outfile)
     print 'Saved pr_kitchen results to %s' % outfile
+
 
 
 
