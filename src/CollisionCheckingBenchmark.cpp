@@ -5,7 +5,7 @@
 #include <boost/math/constants/constants.hpp>
 #include <boost/random.hpp>
 #include <boost/timer.hpp>
-#include <google/profiler.h>
+//#include <google/profiler.h>
 
 #include <sys/time.h>
 
@@ -223,6 +223,8 @@ bool CollisionCheckingBenchmark::RunCollisionBenchmark() {
 
 bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 
+    OpenRAVE::EnvironmentMutex::scoped_lock lock(GetEnv()->GetMutex());
+
 	std::vector<std::vector<double> > data = GenerateSelfCollisionData();
 
 	double total_time = 0.0;
@@ -238,7 +240,7 @@ bool CollisionCheckingBenchmark::RunSelfCollisionBenchmark() {
 		// Check collision
 		struct timeval start, end;
 		gettimeofday(&start, NULL);
-
+        
 		bool incollision = _body->CheckSelfCollision();
 
 		gettimeofday(&end, NULL);
