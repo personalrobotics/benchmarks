@@ -2,9 +2,59 @@
 import argparse, herbpy, openravepy, os
 
 # Thanks to Chris Dellin for this nice hack. :-)
-if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
-    package_name='or_benchmarks'
-    import roslib; roslib.load_manifest(package_name)
+#if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
+package_name='or_benchmarks'
+import roslib; roslib.load_manifest(package_name)
+import prpy; prpy.dependency_manager.export(package_name)
+
+def run_benchmark(body, engine, testfile=None, self_collision=False, envfile=None, 
+                  random=50000, extent=2.0, viewer=None,  outfile=None ):
+
+    # Load the environment
+    if body == 'herb':
+        env, robot = herbpy.initialize(sim=True, attach_viewer=viewer)
+    else:
+        env = openravepy.Environment()
+
+    if envfile:
+        env.Load(envfile)
+        
+    # Set the collision checker
+    cc = openravepy.RaveCreateCollisionChecker(env, engine)
+    cc.SetCollisionOptions(0)
+    if cc is None:
+        raise Exception('Invalid collision engine. Failing.')
+    env.SetCollisionChecker(cc)
+
+    # Verify the kinbody is in the environment
+    body = env.GetKinBody(body)
+    if body is None:
+        raise Exception('No body with name %s in environment. Failing.'
+                        % body)
+
+    # Load the openrave module
+    try:
+        module = openravepy.RaveCreateModule(env, 'collisioncheckingbenchmark')
+    except openravepy.openrave_exception:
+        raise Exception('Unable to load CollisionCheckingBenchmark module.'
+                        ' Check your OPENRAVE_PLUGINS environment variable.')
+
+    # Generate the parameters
+    params = {}
+    params['body'] = str(body.GetName())
+    params['random'] = random
+    if outfile is not None:
+        params['outfile'] = outfile
+    params['extent'] = extent
+    if self_collision:
+        params['self'] = True
+    if testfile:
+        params['datafile'] = testfile
+
+    with env:
+        result = module.SendCommand("Run " + str(params))
+    
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Run the benchmark tests")
@@ -30,48 +80,13 @@ if __name__ == '__main__':
     parser.add_argument("--viewer", type=str, default=None,
         help="The viewer to attach to the environment")
     args = parser.parse_args()
-
-    # Load the environment
-    if args.body == 'herb':
-        env, robot = herbpy.initialize(sim=True, attach_viewer=args.viewer)
-    else:
-        env = openravepy.Environment()
-
-    if args.env:
-        print args.env
-        env.Load(args.env)
-        
-    # Set the collision checker
-    cc = openravepy.RaveCreateCollisionChecker(env, args.engine)
-    cc.SetCollisionOptions(0)
-    if cc is None:
-        raise Exception('Invalid collision engine. Failing.')
-    env.SetCollisionChecker(cc)
-
-    # Verify the kinbody is in the environment
-    body = env.GetKinBody(args.body)
-    if body is None:
-        raise Exception('No body with name %s in environment. Failing.'
-                        % args.body)
-
-    # Load the openrave module
-    try:
-        module = openravepy.RaveCreateModule(env, 'collisioncheckingbenchmark')
-    except openravepy.openrave_exception:
-        raise Exception('Unable to load CollisionCheckingBenchmark module.'
-                        ' Check your OPENRAVE_PLUGINS environment variable.')
-
-    # Generate the parameters
-    params = {}
-    params['body'] = str(body.GetName())
-    params['random'] = args.random
-    if args.outfile is not None:
-        params['outfile'] = args.outfile
-    params['extent'] = args.extent
-    if args.self:
-        params['self'] = True
-    if args.test:
-        params['datafile'] = args.test
-
-    with env:
-        result = module.SendCommand("Run " + str(params))
+    
+    run_benchmark(args.body, args.engine,
+                  testfile = args.test,
+                  self_collision = args.self,
+                  envfile = args.env,
+                  viewer = args.viewer,
+                  random = args.random,
+                  outfile = args.outfile,
+                  extent = args.extent
+                  )

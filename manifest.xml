@@ -8,6 +8,7 @@
   <url>http://ros.org/wiki/collision_checking</url>
   <depend package="herbpy" />
   <depend package="openrave" />
+  <depend package="or_fcl" />
   <export>
 	<openrave plugins="${prefix}/lib" />
 	<python path="${prefix}/pythonsrc" />
