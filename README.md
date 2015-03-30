@@ -20,6 +20,8 @@ The following .rosinstall can be used to download the important packages into a 
 - git: {local-name: herb_description, uri: 'git@github.com:personalrobotics/herb_description'}
 - git: {local-name: or_urdf, uri: 'git@github.com:personalrobotics/or_urdf'}
 - git: {local-name: openrave_catkin, uri: 'git@github.com:personalrobotics/openrave_catkin'}
+- git: {local-name: ss_plotting, uri: 'git@github.com:personalrobotics/ss_plotting'}
+- git: {local-name: or_fcl, uri: 'git@github.com:personalrobotics/or_fcl'}
 ```
 
 # Kinematic Benchmarks
