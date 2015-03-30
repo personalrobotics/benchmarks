@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
     moveit_ros_planning_interface
     roscpp
     pluginlib
+    openrave_catkin
 )
 catkin_package()
 
@@ -29,7 +30,7 @@ link_directories(
 )
 
 # OpenRAVE plugin.
-add_library("${PROJECT_NAME}_plugin" SHARED
+openrave_plugin("${PROJECT_NAME}_plugin"
     src/BenchmarksModule.cpp
     src/CollisionCheckingBenchmark.cpp
     src/DataUtils.cpp
@@ -40,12 +41,7 @@ target_link_libraries("${PROJECT_NAME}_plugin"
     ${OpenRAVE_LIBRARIES}
     ${YamlCpp_LIBRARIES}
 )
-set_target_properties("${PROJECT_NAME}_plugin" PROPERTIES
-    PREFIX ""
-    COMPILE_FLAGS "${OpenRAVE_CXX_FLAGS}"
-    LINK_FLAGS "${OpenRAVE_LINK_FLAGS}"
-    LIBRARY_OUTPUT_DIRECTORY "${CATKIN_DEVEL_PREFIX}/${CATKIN_GLOBAL_LIB_DESTINATION}/openrave-${OpenRAVE_LIBRARY_SUFFIX}"
-)
+
 
 # Profiling benchmark.
 add_executable(run_profiler

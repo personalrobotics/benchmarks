@@ -2,10 +2,10 @@
 import argparse, herbpy, openravepy, os
 
 # Thanks to Chris Dellin for this nice hack. :-)
-#if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
-package_name='or_benchmarks'
-import roslib; roslib.load_manifest(package_name)
-import prpy; prpy.dependency_manager.export(package_name)
+if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
+    package_name='or_benchmarks'
+    import roslib; roslib.load_manifest(package_name)
+    import prpy; prpy.dependency_manager.export(package_name)
 
 def run_benchmark(body, engine, testfile=None, self_collision=False, envfile=None, 
                   random=50000, extent=2.0, viewer=None,  outfile=None ):
@@ -53,7 +53,6 @@ def run_benchmark(body, engine, testfile=None, self_collision=False, envfile=Non
 
     with env:
         result = module.SendCommand("Run " + str(params))
-    
 
 
 if __name__ == '__main__':

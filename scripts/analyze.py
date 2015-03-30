@@ -1,21 +1,17 @@
 #!/usr/bin/env python
-package_name='or_benchmarks'
-import roslib; roslib.load_manifest(package_name)
+import os
+
+# Thanks to Chris Dellin for this nice hack. :-)
+if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
+    package_name='or_benchmarks'
+    import roslib; roslib.load_manifest(package_name)
+
 import argparse, numpy, yaml
-import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-import pylab
+from ss_plotting.make_plots import plot_histogram
+import logging
+logger = logging.getLogger('or_benchmarks')
 
-
-
-def output(fig, path, size, fontsize=10):
-    if path is not None:
-#        fig.set_size_inches(size)
-        fig.savefig(path, bbox_inches='tight', pad_inches=0.02)
-    else:
-        plt.show()
-
-def analyze(datafiles, hists=False, title=None, outfile=None):
+def analyze(datafiles, title=None, out_basename=None):
     data = {}
 
     for datafile in datafiles:
@@ -26,88 +22,42 @@ def analyze(datafiles, hists=False, title=None, outfile=None):
 
 
     # Calculate checks per second
-    vals = []
+    groups = []
     for datafile in datafiles:
         d = data[datafile]
         elapsed = float(d['elapsed_ms'])/1000.0
         checks = int(d['checks'])
-        vals.append(float(checks)/elapsed)
+        checks_per_second = float(checks)/elapsed
+        groups.append([checks_per_second])
 
-        evals = [float(pt['elapsed_ms']) for pt in d['data']]
-        if hists:
-            pylab.figure()
-            pylab.hist(evals, 10, histtype='stepfilled')
-        
+    colors = ['purple', 'green', 'blue', 'orange', 'red', 'pink']
+    group_labels = [name.split('_')[0] for name in datafiles]
 
     # Generate the plot of checks per second
-    fig = plt.figure()
-    ax = fig.add_subplot(211)
-
-    bar_width = 0.35
-    offset = 0.2
-    colors = ['r', 'g', 'b', 'c', 'm', 'y', 'k']
-    rects = []
-    max_height = 0.
-    for idx in range(len(vals)):
-        rects = plt.bar(offset + idx*bar_width,
-                       vals[idx],
-                       bar_width,
-                       color = colors[idx],
-                       alpha = 0.4,
-                       label = datafiles[idx].split('_')[0])
-        rect = rects[0]
-        plt.text(rect.get_x()+rect.get_width()/2., 
-                 1.05*rect.get_height(),
-                 '%0.2f' % (vals[idx]),
-                 ha='center',
-                 va='bottom')
-        if 1.05*rect.get_height() > max_height:
-            max_height = 1.05*rect.get_height()
-
-    plt.ylabel('Checks per second')
-    plt.legend(frameon=False)
-    if title is not None:
-        plt.title(title)
-    ax.set_xticks([])
-    ax.set_xlim([0, 2.*offset + len(vals)*bar_width])
-    ax.set_ylim([0, 1.2*max_height])
-
-    # Now generate the plot of average second per check
-    ax = fig.add_subplot(212)
-    rects = []
-    max_height = 0
-    for idx in range(len(vals)):
-        v = 1000.*1./vals[idx]
-        rects = plt.bar(offset + idx*bar_width,
-                        v,
-                        bar_width,
-                        color = colors[idx],
-                        alpha = 0.4,
-                        label = datafiles[idx].split('_')[0])
-        rect = rects[0]
-        plt.text(rect.get_x()+rect.get_width()/2., 
-                 1.02*rect.get_height(),
-                 '%0.6f' % (v),
-                 ha='center',
-                 va='bottom')
-
-        if 1.02*rect.get_height() > max_height:
-            max_height = 1.02*rect.get_height()
+    outfile = None
+    if out_basename is not None:
+        outfile = '%s.%s.%s' % (out_basename, 'cps', 'png')
+    plot_histogram(groups, group_labels, colors[:len(groups)],
+                   bin_ticks=False,
+                   plot_ylabel='Checks per second',
+                   plot_title = title,
+                   savefile=outfile,
+                   savefile_size=(7,3))
+    if outfile is not None:
+        logger.info('Saved checks per second data to file %s' % outfile)
         
-    plt.ylabel('Milliseconds per check')
-    plt.legend(frameon=False)
-    if title is not None:
-        plt.title(title)
-    ax.set_xticks([])
-    ax.set_xlim([0, 2.*offset + len(vals)*bar_width])
-    ax.set_ylim([0., 1.2*max_height])
-
-    if outfile:
-        output(fig, outfile, (5,5))
-
-    plt.tight_layout()
-    plt.show()
-
+    # Now generate the plot of average second per check
+    if out_basename is not None:
+        outfile = '%s.%s.%s' % (out_basename, 'mspc', 'png')
+    new_groups = [[1000.*1./group[0]] for group in groups]
+    plot_histogram(new_groups, group_labels, colors[:len(groups)],
+                   bin_ticks=False,
+                   plot_ylabel='Milliseconds per check',
+                   plot_title = title,
+                   savefile=outfile,
+                   savefile_size=(7,3))
+    if outfile is not None:
+        logger.info('Saved milliseconds per check data to file %s' % outfile)
 
 if __name__ == '__main__':
 

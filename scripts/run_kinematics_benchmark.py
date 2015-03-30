@@ -9,7 +9,7 @@ if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Run the benchmark tests")
-    parser.add_argument("--type", type=str, default="fk",
+    parser.add_argument("--type", type=str, default="fk", choices=['fk', 'jacobian'],
                         help="The type of benchmark to run (fk or jacobian)")
     parser.add_argument("--outfile", type=str, default=None,
                         help="The output file to save results in, if none results are not saved")
