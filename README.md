@@ -19,4 +19,27 @@ The following .rosinstall can be used to download the important packages into a 
 - git: {local-name: prpy, uri: 'git@github.com:personalrobotics/prpy'}
 - git: {local-name: herb_description, uri: 'git@github.com:personalrobotics/herb_description'}
 - git: {local-name: or_urdf, uri: 'git@github.com:personalrobotics/or_urdf'}
+- git: {local-name: openrave_catkin, uri: 'git@github.com:personalrobotics/openrave_catkin'}
+```
+
+# Kinematic Benchmarks
+The kinematick benchmark script can be used to profile forward kinematic computation and Jacobian computation.  
+
+To profile forward kinematics:
+```
+cmd> rosrun or_benchmarks run_kinematics_benchmark.py --type fk
+```
+By default this will randomly sample 50,000 configurations for the right arm of HERB and compute forward kinematics for each of these configurations.  To test a different manipulator, use the ```--manip``` flag:
+```
+cmd> rosrun or_benchmarks run_kinematics_benchmark.py --type fk --manip head
+```
+
+To profile Jacobian computation:
+```
+cmd> rosrun or_benchmarks run_kinematics_benchmark.py --type jacobian
+```
+
+Use the ```--help``` flag to see all options for the script:
+```
+cmd> rosrun or_benchmarks run_kinematics_benchmark.py --help
 ```
