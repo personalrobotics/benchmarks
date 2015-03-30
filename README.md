@@ -43,3 +43,17 @@ Use the ```--help``` flag to see all options for the script:
 ```
 cmd> rosrun or_benchmarks run_kinematics_benchmark.py --help
 ```
+
+# Collision Benchmarks
+The collision benchmark script can be used to profile both self collision checking and environment collision checking.
+
+To profile self collision:
+```
+cmd> rosrun or_benchmarks run_collision_benchmark.py --self
+```
+This will generate 50000 poses for the HERB robot and check self collision in each pose.
+
+Use the ```--help``` flag to see all options for the script:
+```
+cmd> rosrun or_benchmarks run_collision_benchmark.py --help
+```
