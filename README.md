@@ -22,14 +22,14 @@ The following .rosinstall can be used to download the important packages into a 
 
 ```
 - git: {local-name: or_benchmarks, uri: 'git@github.com:personalrobotics/or_benchmarks'}
-- git: {local-name: herbpy, uri: 'git@github.com:personalrobotics/herbpy'}
-- git: {local-name: prpy, uri: 'git@github.com:personalrobotics/prpy'}
-- git: {local-name: herb_description, uri: 'git@github.com:personalrobotics/herb_description'}
-- git: {local-name: or_urdf, uri: 'git@github.com:personalrobotics/or_urdf'}
-- git: {local-name: openrave_catkin, uri: 'git@github.com:personalrobotics/openrave_catkin'}
-- git: {local-name: ss_plotting, uri: 'git@github.com:personalrobotics/ss_plotting'}
-- git: {local-name: or_fcl, uri: 'git@github.com:personalrobotics/or_fcl'}
-- git: {local-name: pr-ordata, uri: 'git@github.com:personalrobotics/pr-ordata'}
+- git: {local-name: herbpy, uri: 'git@github.com:personalrobotics/herbpy', version: 1.4.0}
+- git: {local-name: prpy, uri: 'git@github.com:personalrobotics/prpy', version: 0.4.0}
+- git: {local-name: herb_description, uri: 'git@github.com:personalrobotics/herb_description', version: 1.1.0}
+- git: {local-name: or_urdf, uri: 'git@github.com:personalrobotics/or_urdf', version: 0.2.0}
+- git: {local-name: openrave_catkin, uri: 'git@github.com:personalrobotics/openrave_catkin', version: 1.0.1}
+- git: {local-name: ss_plotting, uri: 'git@github.com:personalrobotics/ss_plotting', version: 0.2.0}
+- git: {local-name: or_fcl, uri: 'git@github.com:personalrobotics/or_fcl', version: 0.1.0}
+- git: {local-name: pr-ordata, uri: 'git@github.com:personalrobotics/pr-ordata', version: feature/pr_kitchen}
 ```
 
 # Kinematic Benchmarks
