@@ -62,9 +62,9 @@ To run all benchmarks and generated updated statistics simply run:
 cmd> rosrun or_benchmarks run_all.py
 ```
 This will run three sets of tests:
-* Self collision - 50000 poses read from ```datasets/self_benchmark.test```
-* Collision against an empty environment - 50000 poses read from ```datasets/env_benchmark.test```
-* Collision against the pr_kitchen environment - 50000 poses read from ```datasets/env_benchmark.test```
+* Self collision - 20000 poses read from ```datasets/self_benchmark.test```
+* Collision against an empty environment - 20000 poses read from ```datasets/env_benchmark.test```
+* Collision against the pr_kitchen environment - 20000 poses read from ```datasets/env_benchmark.test```
 Each test will be run using the ode, pqp and fcl collision checkers.
 
 The script will generate a new set of ```.png``` files which compare timing information across the three collision checking engines.  These new files will be written to the ```results``` directory.  To save these results, and update this webpage, just commit the new files.
