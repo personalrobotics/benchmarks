@@ -41,6 +41,8 @@ def analyze(datafiles, title=None, out_basename=None):
                    bin_ticks=False,
                    plot_ylabel='Checks per second',
                    plot_title = title,
+                   fontsize=12,
+                   legend_fontsize=12,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
@@ -54,6 +56,8 @@ def analyze(datafiles, title=None, out_basename=None):
                    bin_ticks=False,
                    plot_ylabel='Milliseconds per check',
                    plot_title = title,
+                   fontsize=12,
+                   legend_fontsize=12,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
