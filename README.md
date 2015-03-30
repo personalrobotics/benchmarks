@@ -1,6 +1,13 @@
 # OpenRAVE benchmark tools
 Benchmarks to measure OpenRAVE's performance.
 
+# Current Results
+The following are the latest results.
+
+<img src="https://github.com/personalrobotics/or_benchmarks/blob/master/results/self_collision.cps.png" alt="self_collision_results" width="250"/>
+<img src="https://github.com/personalrobotics/or_benchmarks/blob/master/results/empty_env_collision.cps.png" alt="empty_env_collision_results" width="250"/>
+<img src="https://github.com/personalrobotics/or_benchmarks/blob/master/results/prkitchen_collision.cps.png" alt="prkitchen_env_results" width="250" />
+
 # Installation
 The following packages must be installed:
 * ros-hydro-moveit-core
