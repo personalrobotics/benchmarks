@@ -2,8 +2,8 @@
 Changelog for package or_benchmarks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.0 (2015-05-07)
+------------------
 * Updating results with latest versions of code. Changing dataset to contiain 10000 points instead of 20000.
 * Making moveit an optional depedency. Updating analyze to work with latest ss_plotting.
 * Updating benchmarks

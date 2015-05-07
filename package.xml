@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>or_benchmarks</name>
-  <version>0.2.0</version>
+  <version>1.0.0</version>
   <description>
     Benchmarks for measuring the performance of OpenRAVE.
   </description>
