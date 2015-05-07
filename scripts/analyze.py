@@ -31,6 +31,7 @@ def analyze(datafiles, title=None, out_basename=None):
         groups.append([checks_per_second])
 
     colors = ['purple', 'green', 'blue', 'orange', 'red', 'pink']
+    color_emphasis = [True for c in colors]
     group_labels = [name.split('_')[0] for name in datafiles]
 
     # Generate the plot of checks per second
@@ -38,6 +39,7 @@ def analyze(datafiles, title=None, out_basename=None):
     if out_basename is not None:
         outfile = '%s.%s.%s' % (out_basename, 'cps', 'png')
     plot_bar_graph(groups, group_labels, colors[:len(groups)],
+                   group_color_emphasis = color_emphasis[:len(groups)],
                    bin_ticks=False,
                    plot_ylabel='Checks per second',
                    plot_title = title,
@@ -53,6 +55,7 @@ def analyze(datafiles, title=None, out_basename=None):
         outfile = '%s.%s.%s' % (out_basename, 'mspc', 'png')
     new_groups = [[1000.*1./group[0]] for group in groups]
     plot_bar_graph(new_groups, group_labels, colors[:len(groups)],
+                   group_color_emphasis = color_emphasis[:len(groups)],
                    bin_ticks=False,
                    plot_ylabel='Milliseconds per check',
                    plot_title = title,

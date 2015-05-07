@@ -54,7 +54,6 @@ if __name__ == '__main__':
                         help="The collision checkers to test")
     args = parser.parse_args()
 
-    
     # Self collision
     self_collision_data = run_self_collision(args.engines)
     out_basename = os.path.join(package_path, 'results', 'self_collision')
@@ -64,16 +63,15 @@ if __name__ == '__main__':
     empty_collision_data = run_environment_collision(args.engines)
     out_basename = os.path.join(package_path, 'results', 'empty_env_collision')
     analyze(empty_collision_data, title='Empty Environment Collisions', out_basename=out_basename)
-    
 
     # PR kitchen
     from catkin.find_in_workspaces import find_in_workspaces
-    kitchen_path = find_in_workspaces(
+    kitchen_env = find_in_workspaces(
         search_dirs=['share'],
         project='pr_ordata',
-        path='data/kitchen',
+        path='data/kitchen/pr_kitchen.env.xml',
         first_match_only=True)[0]
-    kitchen_env = os.path.join(kitchen_path, 'pr_kitchen.env.xml')
+        
     kitchen_collision_data = run_environment_collision(args.engines, kitchen_env, 'kitchen')
     out_basename = os.path.join(package_path, 'results', 'prkitchen_collision')
     analyze(kitchen_collision_data, title='PR Kitchen Environment', out_basename=out_basename)
