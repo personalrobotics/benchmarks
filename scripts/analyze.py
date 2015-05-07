@@ -7,7 +7,7 @@ if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
     import roslib; roslib.load_manifest(package_name)
 
 import argparse, numpy, yaml
-from ss_plotting.make_plots import plot_histogram
+from ss_plotting.make_plots import plot_bar_graph
 import logging
 logger = logging.getLogger('or_benchmarks')
 
@@ -37,7 +37,7 @@ def analyze(datafiles, title=None, out_basename=None):
     outfile = None
     if out_basename is not None:
         outfile = '%s.%s.%s' % (out_basename, 'cps', 'png')
-    plot_histogram(groups, group_labels, colors[:len(groups)],
+    plot_bar_graph(groups, group_labels, colors[:len(groups)],
                    bin_ticks=False,
                    plot_ylabel='Checks per second',
                    plot_title = title,
@@ -52,7 +52,7 @@ def analyze(datafiles, title=None, out_basename=None):
     if out_basename is not None:
         outfile = '%s.%s.%s' % (out_basename, 'mspc', 'png')
     new_groups = [[1000.*1./group[0]] for group in groups]
-    plot_histogram(new_groups, group_labels, colors[:len(groups)],
+    plot_bar_graph(new_groups, group_labels, colors[:len(groups)],
                    bin_ticks=False,
                    plot_ylabel='Milliseconds per check',
                    plot_title = title,
