@@ -47,7 +47,7 @@ namespace benchmarks {
 				 const double &z_min, 
 				 const double &z_max) {
 			xmin = x_min;
-			ymax = x_max;
+			xmax = x_max;
 			ymin = y_min;
 			ymax = y_max;
 			zmin = z_min;
