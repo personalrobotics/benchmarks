@@ -50,7 +50,7 @@ def run_environment_collision(engines, env_file=None, test_description='empty'):
 if __name__ == '__main__':    
 
     parser = argparse.ArgumentParser(description="Run the benchmark tests")
-    parser.add_argument('--engines', type=str, nargs='+', default=['ode','pqp','fcl'],
+    parser.add_argument('--engines', type=str, nargs='+', default=['ode','pqp','fcl', 'sdf'],
                         help="The collision checkers to test")
     args = parser.parse_args()
 

@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 catkin_package()
 
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS program_options system)
 find_package(OpenRAVE REQUIRED)
 find_package(catkin COMPONENTS
     moveit_core
@@ -16,6 +16,9 @@ find_package(catkin COMPONENTS
 
 include(FindPkgConfig)
 pkg_check_modules(YamlCpp REQUIRED yaml-cpp)
+if (${YamlCpp_VERSION} VERSION_LESS 0.5.0)
+    message(FATAL_ERROR "Using old verison of yaml-cpp (< 0.5.0) API. Newer version required.")
+endif ()
 
 include_directories(
     "include/"
