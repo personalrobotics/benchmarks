@@ -32,7 +32,6 @@ def analyze(datafiles, title=None, out_basename=None):
 
     from palettable.colorbrewer import diverging
     colors = diverging.BrBG_7.colors
-    colors.reverse()
     series_labels = [name.split('_')[0] for name in datafiles]
 
     # Generate the plot of checks per second
