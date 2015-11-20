@@ -13,6 +13,7 @@ The following packages must be installed:
 * ros-hydro-moveit-core
 * ros-hydro-moveit-ros-planning-interface
 * libgoogle-perftools-dev
+* palettable (pip)
 ```
 cmd> sudo apt-get install ros-hydro-moveit-core ros-hydro-moveit-ros-planning-interface \
 libgoogle-perftools-dev
