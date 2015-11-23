@@ -31,7 +31,7 @@ def analyze(datafiles, title=None, out_basename=None):
         series.append([checks_per_second])
 
     from palettable.colorbrewer import diverging
-    colors = diverging.BrBG_7.colors
+    colors = diverging.BrBG_4.colors
     series_labels = [name.split('_')[0] for name in datafiles]
 
     # Generate the plot of checks per second
@@ -45,6 +45,7 @@ def analyze(datafiles, title=None, out_basename=None):
                    series_use_labels=True,
                    legend_location=None,
                    series_labels=series_labels,
+		   show_plot=False,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
@@ -61,6 +62,7 @@ def analyze(datafiles, title=None, out_basename=None):
                    legend_location=None,
                    series_use_labels=True,
                    series_labels=series_labels,
+		   show_plot=False,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
