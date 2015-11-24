@@ -8,7 +8,7 @@ if ord(os.environ.get('ROS_DISTRO', 'hydro')[0]) <= ord('f'):
     import prpy; prpy.dependency_manager.export(package_name)
 
 from run_collision_benchmark import *
-from analyze import *
+from analyze_collision_benchmarks import *
 
 from rospkg import RosPack
 ros_pack = RosPack()
