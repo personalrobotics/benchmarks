@@ -24,12 +24,11 @@ KinematicBenchmarks::~KinematicBenchmarks() {
 }
 
 bool KinematicBenchmarks::ParseParameters(std::istream &in){
-	YAML::Parser parser(in);
-	YAML::Node doc;
-	parser.GetNextDocument(doc);
 
-	if(const YAML::Node* pbody = doc.FindValue("robot")){
-		*pbody >> _robot_name;
+    YAML::Node doc = YAML::Load(in);
+
+	if(doc["robot"]){
+        _robot_name = doc["robot"].as<std::string>();
 		RAVELOG_INFO("[KinematicBenchmarks] Running benchmark for robot %s\n", _robot_name.c_str());
 		_robot = GetEnv()->GetRobot(_robot_name);
 		if(!_robot){
@@ -41,8 +40,8 @@ bool KinematicBenchmarks::ParseParameters(std::istream &in){
 		return false;
 	}
 
-	if(const YAML::Node* pmanip = doc.FindValue("manip")){
-		*pmanip >> _manip_name;
+	if(doc["manip"]){
+        _manip_name = doc["manip"].as<std::string>();
 		RAVELOG_INFO("[KinematicBenchmarks] Running benchmark for manip %s\n", _manip_name.c_str());
 		_manip = _robot->GetManipulator(_manip_name);
 		if(!_manip){
@@ -57,12 +56,12 @@ bool KinematicBenchmarks::ParseParameters(std::istream &in){
 	}
 
 
-	if(const YAML::Node* prandom = doc.FindValue("random")){
-		*prandom >> _num_samples;
+	if(doc["random"]){
+        _num_samples = doc["random"].as<unsigned int>();
 	}
 
-	if(const YAML::Node* poutfile = doc.FindValue("outfile")){
-		*poutfile >> _outfile;
+	if(doc["outfile"]){
+        _outfile = doc["outfile"].as<std::string>();
 		_record = true;
 	}
 

@@ -21,6 +21,8 @@ def run_benchmark(body, engine, testfile=None, self_collision=False, envfile=Non
         
     # Set the collision checker
     cc = openravepy.RaveCreateCollisionChecker(env, engine)
+    if(engine == 'sdf'):
+        cc.SendCommand('SetSubChecker ode')
     cc.SetCollisionOptions(0)
     if cc is None:
         raise Exception('Invalid collision engine. Failing.')

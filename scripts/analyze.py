@@ -22,29 +22,30 @@ def analyze(datafiles, title=None, out_basename=None):
 
 
     # Calculate checks per second
-    groups = []
+    series = []
     for datafile in datafiles:
         d = data[datafile]
         elapsed = float(d['elapsed_ms'])/1000.0
         checks = int(d['checks'])
         checks_per_second = float(checks)/elapsed
-        groups.append([checks_per_second])
+        series.append([checks_per_second])
 
-    colors = ['purple', 'green', 'blue', 'orange', 'red', 'pink']
-    color_emphasis = [True for c in colors]
-    group_labels = [name.split('_')[0] for name in datafiles]
+    from palettable.colorbrewer import diverging
+    colors = diverging.BrBG_4.colors
+    series_labels = [name.split('_')[0] for name in datafiles]
 
     # Generate the plot of checks per second
     outfile = None
     if out_basename is not None:
         outfile = '%s.%s.%s' % (out_basename, 'cps', 'png')
-    plot_bar_graph(groups, group_labels, colors[:len(groups)],
-                   group_color_emphasis = color_emphasis[:len(groups)],
-                   bin_ticks=False,
+    plot_bar_graph(series, colors[:len(series)],
                    plot_ylabel='Checks per second',
                    plot_title = title,
                    fontsize=12,
-                   legend_fontsize=12,
+                   series_use_labels=True,
+                   legend_location=None,
+                   series_labels=series_labels,
+		   show_plot=False,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
@@ -53,14 +54,15 @@ def analyze(datafiles, title=None, out_basename=None):
     # Now generate the plot of average second per check
     if out_basename is not None:
         outfile = '%s.%s.%s' % (out_basename, 'mspc', 'png')
-    new_groups = [[1000.*1./group[0]] for group in groups]
-    plot_bar_graph(new_groups, group_labels, colors[:len(groups)],
-                   group_color_emphasis = color_emphasis[:len(groups)],
-                   bin_ticks=False,
+    new_series = [[1000.*1./s[0]] for s in series]
+    plot_bar_graph(new_series, colors[:len(series)],
                    plot_ylabel='Milliseconds per check',
                    plot_title = title,
                    fontsize=12,
-                   legend_fontsize=12,
+                   legend_location=None,
+                   series_use_labels=True,
+                   series_labels=series_labels,
+		   show_plot=False,
                    savefile=outfile,
                    savefile_size=(7,3))
     if outfile is not None:
@@ -83,4 +85,4 @@ if __name__ == '__main__':
         print 'Must provide a datafile to analyze.'
         exit(0)
 
-    analyze(args.datafiles, hists=args.hists, title=args.title)
+    analyze(args.datafiles, title=args.title)

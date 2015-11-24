@@ -25,4 +25,6 @@
   <run_depend>herbpy</run_depend>
   <run_depend>python</run_depend>
   <run_depend>python-argparse</run_depend>
+  <run_depend>or_fcl</run_depend>
+  <run_depend>or_sdf_collisionchecker</run_depend>
 </package>
