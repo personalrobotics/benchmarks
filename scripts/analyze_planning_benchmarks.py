@@ -72,6 +72,8 @@ if __name__ == '__main__':
                         help="The title for plots")
     parser.add_argument("--datafiles", type=str, nargs='+',
                         help="The datafiles to load and analyze")
+    parser.add_argument("--outdir", type=str, default=None,
+                        help="The directory to save plots to")
 
 
     args = parser.parse_args()
@@ -80,4 +82,5 @@ if __name__ == '__main__':
         print 'Must provide a datafile to analyze.'
         exit(0)
 
-    analyze_planning_benchmarks(args.datafiles, title=args.title)
+    analyze_planning_benchmarks(args.datafiles, title=args.title,
+                                out_basename=args.outdir)
