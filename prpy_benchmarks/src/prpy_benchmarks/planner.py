@@ -1,33 +1,26 @@
-def get_planner(planner_name, **kwargs):
+def get_planner(planner_module, planner_class_name, **kwargs):
     """
     Convert a planner name to a planner
+    @param planner_module The module the planner can be found in
+    @param planner_class_name The planner class to load from the module
+    @param kwargs Additional keyword arguments to pass to the class constructor
     """
-    if planner_name == 'cbirrt':
-        from prpy.planning import CBiRRTPlanner
-        planner = CBiRRTPlanner(**kwargs)
-    elif planner_name == 'chomp':
-        from prpy.planning import CHOMPPlanner
-        planner = CHOMPPlanner(**kwargs)
-    elif planner_name == 'snap':
-        from prpy.planning import SnapPlanner
-        planner = SnapPlanner(**kwargs)
-    elif planner_name == 'trajopt':
-        from or_trajopt import TrajoptPlanner
-        planner = TrajoptPlanner(**kwargs)
-    else:
-        from ..benchmark_utils import BenchmarkException
-        raise BenchmarkException('Unrecognized planner name %s', planner_name)
-
+    import importlib
+    m = importlib.import_module(planner_module)
+    c = getattr(m, planner_class_name)
+    planner = c(**kwargs)
     return planner
 
 class BenchmarkPlannerMetadata(object):
 
-    def __init__(self, planner_name=None, planner_parameters=None):
+    def __init__(self, planner_module=None, planner_class_name=None, planner_parameters=None):
         """
-        @param planner_name The name of the planner (string - see get_planner)
-        @param planner_parameters A dictionary of parameters for the planner
+        @param planner_name The module to load the planner from (as string - i.e. 'prpy.planning')
+        @param planner_class_name The name of the planner class (as string - i.e. 'CBiRRTPlanner')
+        @param planner_parameters A dictionary of parameters to pass to the planner constructor
         """
-        self.planner_name = planner_name
+        self.planner_module = planner_module
+        self.planner_class_name = planner_class_name
         self.planner_parameters = planner_parameters if planner_parameters is not None else dict()
 
     def to_yaml(self):
@@ -35,7 +28,8 @@ class BenchmarkPlannerMetadata(object):
         Serialize this planner metadata to a yaml dictionary
         """
         import yaml
-        p = { 'planner_name', self.planner_name,
+        p = { 'planner_module', self.planner_module,
+              'planner_class_name', self.planner_class_name,
               'planner_parameters', yaml.dump(self.planner_parameters) }
         return p
 
@@ -43,7 +37,8 @@ class BenchmarkPlannerMetadata(object):
         """
         @param planner_yaml The planner metadata in yaml format
         """
-        self.planner_name = planner_yaml.get('planner_name', None)
+        self.planner_module = planner_yaml.get('planner_module', None)
+        self.planner_class_name = planner_yaml.get('planner_class_name', None)
         planner_parameters = planner_yaml.get('planner_parameters', None)
         if planner_parameters is not None:
             import yaml

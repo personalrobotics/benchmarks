@@ -1,1 +1,2 @@
-planner_name: 'cbirrt'
+planner_module: prpy.planning
+planner_class_name: CBiRRTPlanner

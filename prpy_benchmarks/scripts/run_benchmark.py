@@ -20,7 +20,7 @@ if __name__ == '__main__':
     env, robot = herbpy.initialize(sim=True)
 
     from prpy_benchmarks.benchmark_utils import execute_benchmark
-    execute_benchmark(args.queryfile, args.plannerfile, 
-                      env=env, robot=robot,
-                      outfile=args.outfile)
+    result = execute_benchmark(args.queryfile, args.plannerfile, 
+                               env=env, robot=robot,
+                               outfile=args.outfile)
                         

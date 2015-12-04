@@ -1,17 +1,23 @@
-class BenchmarkQueryResult(object):
+class BenchmarkResult(object):
 
-    def __init__(self, planner_data=None, query_data=None,
+    def __init__(self, queryfile=None, query_md5=None,
+                 plannerfile=None, planner_data_md5=None,
                  time=0.0, success=False, path=None):
         """
-        @param planner_data The BenchmarkPlannerMetadata object used to generate
-          the planner used by the query
-        @param query_data The BenchmarkQuery object used to generate this result
+        @param queryfile The filename of the query used to generate this result
+           (only basename)
+        @parma query_md5 The md5 checksum of the query file
+        @param plannerfile The filename of the planner metadata used to generate this
+           result (only basename)
+        @param planner_data_md5 The md5 checksum of the planner file
         @param time The time to generate this result
         @param success True if this query successfully executed
         @param path The output of the planning call
         """
-        self.planner_data=planner_data
-        self.query_data=query_data
+        self.queryfile=queryfile
+        self.query_md5=query_md5
+        self.plannerfile=plannerfile
+        self.planner_data_md5=planner_data_md5
         self.time=time
         self.success=success
         self.path=path
@@ -20,19 +26,21 @@ class BenchmarkQueryResult(object):
         """
         Serialize this result to a yaml dictionary
         """
-        if self.planner_data is None:
+        import yaml
+        from prpy.serialization import serialize
+
+        if self.plannerfile is None or self.planner_data_md5 is None:
             raise BenchmarkException('No planner data associated with this result')
-        if self.query_data is None:
+        if self.queryfile is None or self.query_md5 is None:
             raise BenchmarkException('No query data associated with this result')
 
-        path_data = None
-        if self.path is not None:
-            path_data = self.path.serialize()
-        result = {'planner_data': self.planner_data.to_yaml(),
-                  'query_data': self.query_data.to_yaml(),
+        result = {'queryfile': self.queryfile,
+                  'query_md5': self.query_md5,
+                  'plannerfile': self.plannerfile,
+                  'planner_data_md5': self.planner_data_md5,
                   'time': self.time,
                   'success': self.success,
-                  'path': path_data
+                  'path': serialize(self.path)
               }
 
         return result
@@ -41,19 +49,13 @@ class BenchmarkQueryResult(object):
         """
         @param result_yaml The result in yaml format
         """
-        pd = result_yaml.get('planner_data', None)
-        if pd is not None:
-            from ..planner import BenchmarkPlanner
-            self.planner_data = BenchmarkPlanner()
-            self.planner_data.from_yaml(pd)
+        self.queryfile = result_yaml.get('queryfile', None)
+        self.query_md5 = result_yaml.get('query_md5', None)
+        self.plannerfile = result_yaml.get('plannerfile', None)
+        self.planner_data_md5 = result_yaml.get('planner_data_md5', None)
 
-        qd = result_yaml.get('query_data', None)
-        if qd is not None:
-            from ..query import BenchmarkQuery
-            self.query_data = BenchmarkQuery()
-            self.query_data.from_yaml(qd)
-        
         self.time = result_yaml.get('time', 0.0)
         self.success = result_yaml.get('success', False)
 
         # TODO: Load in the path
+
