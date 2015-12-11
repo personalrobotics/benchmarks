@@ -8,24 +8,25 @@ def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None
     """
     @param queryfile The file containing the query to execute
     @param plannerfile The file containing metadata about the planner to use
+    @param env The env to run the query against (if None a new env 
+      is created)
+    @param robot The robot to use (if None, the robot is loaded as 
+      part of deserialization)
     @param outdir If not none, the file where the result should be written
     """
     import yaml
+
+    # Load the query
     from .query import BenchmarkQuery
     query = BenchmarkQuery()
-
     with open(queryfile, 'r') as f:
-        query.from_yaml(yaml.load(f.read()))
+        query.from_yaml(yaml.load(f.read()), env=env, robot=robot)
 
+    # Load the planner metadata
     from .planner import BenchmarkPlannerMetadata
     planner_metadata = BenchmarkPlannerMetadata()
     with open(plannerfile, 'r') as f:
         planner_metadata.from_yaml(yaml.load(f.read()))
-
-    # Deserialize the environment - TODO: remove resue bodies
-    from prpy.serialization import deserialize_environment
-    reuse_bodies = [ robot ] if robot is not None else None
-    env = deserialize_environment(query.serialized_env, env=env, reuse_bodies=reuse_bodies)
 
     # Figure out which planner to use
     from .planner import get_planner
@@ -42,9 +43,10 @@ def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None
     with Timer() as timer:
         try:
             success = True
-            path = planning_method(robot, *query.args, **query.kwargs)
+            path = planning_method(*query.args, **query.kwargs)
         except PlanningError as e:
             success = False
+            path = None
     plan_time = timer.get_duration()
 
     # Create a result object

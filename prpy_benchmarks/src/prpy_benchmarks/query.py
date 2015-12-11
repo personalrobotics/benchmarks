@@ -9,7 +9,7 @@ class BenchmarkQuery(object):
         """
         from prpy.serialization import serialize_environment
         self.planning_method = planning_method
-        self.serialized_env = serialize_environment(env) if env is not None else env
+        self.env = env
         self.args = args if args is not None else list()
         self.kwargs = kwargs if kwargs is not None else dict()
 
@@ -17,25 +17,49 @@ class BenchmarkQuery(object):
         """
         Serialize this query to a yaml dictionary
         """
-        import prpy
-
-        if self.serialized_env is None:
+        
+        if self.env is None:
             raise BenchmarkException('The query has no serialized environment')
         if self.planning_method is None:
             raise BenchmarkException('The query has no planning method defined')
 
+        from prpy.serialization import serialize, serialize_environment
         query = {}
-        query['serialized_env'] = self.serialized_env
-        query['args'] = prpy.serialize(self.args)
-        query['kwargs'] = prpy.serialize(self.kwargs)
-        query['planning_method'] = prpy.serialize(self.planning_method)
+        if self.env:
+            query['env'] = serialize_environment(self.env)
+
+        if self.args:
+            query['args'] = serialize(self.args)
+
+        if self.kwargs:
+            query['kwargs'] = serialize(self.kwargs)
+
+        if self.planning_method:
+            query['planning_method'] = serialize(self.planning_method)
+
         return query
 
-    def from_yaml(self, query_yaml):
+    def from_yaml(self, query_yaml, env=None, robot=None):
         """
         @param query_yaml The query in yaml format
+        @param env The environment to deserialize into, if None 
+          a new environment is created
+        @param robot The robot to use (if None, the robot is 
+          loaded as part of deserialization)
         """
+        from prpy.serialization import deserialize_environment, deserialize
+
+        serialized_env = query_yaml.get('env', None)
+        if serialized_env:
+            reuse_bodies = [ robot ] if robot is not None else None
+            self.env = deserialize_environment(serialized_env, env=env, reuse_bodies=reuse_bodies)
+
         self.planning_method=query_yaml.get('planning_method', None)
-        self.serialized_env=query_yaml.get('serialized_env', None)
-        self.args=query_yaml.get('args', list())
-        self.kwargs=query_yaml.get('kwargs', dict())
+
+        serialized_args = query_yaml.get('args', list())
+        if serialized_args:
+            self.args = deserialize(env, serialized_args)
+
+        serialized_kwargs = query_yaml.get('kwargs', dict())
+        if serialized_kwargs:
+            self.kwargs = deserialize(env, serialized_kwargs)

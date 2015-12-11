@@ -68,6 +68,7 @@ if __name__ == '__main__':
     idx = 0
 
     from prpy_benchmarks.query import BenchmarkQuery
+    from prpy.serialization import serialize
     import yaml
     for v in valid_configurations:
         with env:
@@ -75,8 +76,8 @@ if __name__ == '__main__':
             m = robot.GetManipulator(v['manipulator'])
             robot.SetActiveManipulator(m)
             robot.SetActiveDOFs(m.GetArmIndices())
-        planner_args = [ v['end'] ]
-        planner_kwargs = dict()
+        planner_args = [ robot, v['end'] ]
+        planner_kwargs = {'timelimit': 5.0}
         
         query = BenchmarkQuery('PlanToConfiguration', env, args=planner_args, kwargs=planner_kwargs)
         
