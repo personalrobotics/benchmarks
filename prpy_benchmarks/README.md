@@ -34,7 +34,7 @@ This executes two benchmarks.
 
 Alternatively, you can define a yaml file with a list of queries and planners:
 ```shell
-$ rosrun prpy_benchmarks run_benchmarks.py benchmark.yaml
+$ rosrun prpy_benchmarks run_benchmarks.py --benchmarkfiles benchmarks/table_benchmarks.yaml
 ```
 
 The ```--outdir``` parameter can be passed to the ```run_benchmarks.py``` to indicate that results for each benchmark should be saved in a particular directory. 
