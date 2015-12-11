@@ -29,7 +29,7 @@ if __name__ == '__main__':
     from os.path import basename, join, splitext
     from prpy.util import FindCatkinResource
 
-    for b in args.benchmarkfiles:
+    for b in benchmarkfiles:
         import yaml
         with open(b, 'r') as f:
             data = yaml.load(f.read())
