@@ -27,7 +27,8 @@ A result contains metadata about the result of a benchmark. It is comprised of 7
 ## Usage
 The following call can be used to execute the cartesian product of a set of queries and planner metadatas:
 ```shell
-$ rosrun prpy_benchmarks run_benchmarks.py --queryfiles queries/table_query_0.yaml --plannerfiles \ planners/cbirrt_default.yaml planners/snap_default.yaml 
+$ rosrun prpy_benchmarks run_benchmarks.py --queryfiles queries/table_query_0.yaml --plannerfiles \
+planners/cbirrt_default.yaml planners/snap_default.yaml 
 ```
 This executes two benchmarks.
 
