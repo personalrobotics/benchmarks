@@ -51,15 +51,15 @@ class BenchmarkQuery(object):
 
         serialized_env = query_yaml.get('env', None)
         if serialized_env:
-            reuse_bodies = [ robot ] if robot is not None else None
+            reuse_bodies = [ robot ] if robot is not None else list()
             self.env = deserialize_environment(serialized_env, env=env, reuse_bodies=reuse_bodies)
 
         self.planning_method=query_yaml.get('planning_method', None)
 
         serialized_args = query_yaml.get('args', list())
         if serialized_args:
-            self.args = deserialize(env, serialized_args)
+            self.args = deserialize(self.env, serialized_args)
 
         serialized_kwargs = query_yaml.get('kwargs', dict())
         if serialized_kwargs:
-            self.kwargs = deserialize(env, serialized_kwargs)
+            self.kwargs = deserialize(self.env, serialized_kwargs)
