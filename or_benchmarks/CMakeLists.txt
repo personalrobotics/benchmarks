@@ -17,6 +17,8 @@ if (${YamlCpp_VERSION} VERSION_LESS 0.5.0)
     message(FATAL_ERROR "Using old verison of yaml-cpp (< 0.5.0) API. Newer version required.")
 endif ()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
 include_directories(
     "include/"
     ${Boost_INCLUDE_DIRS}
@@ -37,6 +39,7 @@ openrave_plugin("${PROJECT_NAME}_plugin"
     src/CollisionCheckingBenchmark.cpp
     src/DataUtils.cpp
     src/KinematicBenchmarks.cpp
+    src/CheckerResultModule.cpp
 )
 target_link_libraries("${PROJECT_NAME}_plugin"
     profiler
