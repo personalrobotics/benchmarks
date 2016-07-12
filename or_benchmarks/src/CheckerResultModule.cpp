@@ -34,20 +34,26 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
     double result = 0.0;
 
     // Parse the input stream to obtain which method to call
-    std::string inp_arg;
-    sin >> inp_arg;
+    //std::string inp_arg (std::istreambuf_iterator<char>(sin),{});
+    std::string method_name;
+    sin >> method_name;
+
+    std::string notrim_inp_arg;
+    std::getline(sin,notrim_inp_arg);
+    
+
+    //Trim leading whitespaces
+    std::string inp_arg = notrim_inp_arg.substr(notrim_inp_arg.find_first_not_of(' '));
+    std::cout<<"Input argument is "<<inp_arg<<std::endl;
 
     // Check if one word or two - Assume robot has DOF 
     size_t blank_count = std::count(inp_arg.begin(),inp_arg.end(),' ');
 
-    // Assume method name <blank> kinbody <optional-blank> object
-    size_t first_blank_pos = inp_arg.find(" ");
-    std::string method_name = inp_arg.substr(0,first_blank_pos);
-
-    if (blank_count == 1)
+    if (blank_count == 0)
     {
         // Get body name
-        std::string body_name = inp_arg.substr(first_blank_pos+1);
+        //std::string body_name = inp_arg.substr(first_blank_pos+1);
+        std::string body_name(inp_arg);
         OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
         std::cout<<method_name<<" - "<<body_name<<std::endl;
 
@@ -66,14 +72,14 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
         }
 
     }
-    else if (blank_count == 2)
+    else if (blank_count == 1)
     {
         // Must be 2 - Get body and object
-        size_t second_blank_pos = inp_arg.find(" ",first_blank_pos+1);
-        std::string body_name = inp_arg.substr(first_blank_pos+1,second_blank_pos - first_blank_pos - 1);
+        size_t first_blank_pos = inp_arg.find(" ");
+        std::string body_name = inp_arg.substr(0,first_blank_pos);
         OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
 
-        std::string object_name = inp_arg.substr(second_blank_pos+1);
+        std::string object_name = inp_arg.substr(first_blank_pos+1);
         OpenRAVE::KinBodyConstPtr object = GetEnv() -> GetKinBody(object_name);
 
         std::cout<<method_name<<" - "<<body_name<<" "<<object_name<<std::endl;
