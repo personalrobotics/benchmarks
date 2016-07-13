@@ -31,10 +31,10 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
     // Result to output
     std::chrono::time_point<std::chrono::high_resolution_clock> start,end;
-    double result = 0.0;
+    double time_result = 0.0;
+    bool check_result = false;
 
     // Parse the input stream to obtain which method to call
-    //std::string inp_arg (std::istreambuf_iterator<char>(sin),{});
     std::string method_name;
     sin >> method_name;
 
@@ -52,7 +52,6 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
     if (blank_count == 0)
     {
         // Get body name
-        //std::string body_name = inp_arg.substr(first_blank_pos+1);
         std::string body_name(inp_arg);
         OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
         std::cout<<method_name<<" - "<<body_name<<std::endl;
@@ -60,14 +59,14 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
         if (method_name == "CheckCollision")
         {
             start = std::chrono::high_resolution_clock::now();
-            checker_ptr -> CheckCollision(pbody);
+            check_result = checker_ptr -> CheckCollision(pbody);
             end = std::chrono::high_resolution_clock::now();
         }
         else
         {
             //Must be CheckSelfCollision
             start = std::chrono::high_resolution_clock::now();
-            checker_ptr -> CheckSelfCollision(pbody);
+            check_result = checker_ptr -> CheckSelfCollision(pbody);
             end = std::chrono::high_resolution_clock::now();
         }
 
@@ -86,7 +85,7 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
         //Method name must be CheckCollision
         start = std::chrono::high_resolution_clock::now();
-        checker_ptr -> CheckCollision(pbody,object);
+        check_result = checker_ptr -> CheckCollision(pbody,object);
         end = std::chrono::high_resolution_clock::now();
     }
     else
@@ -96,9 +95,9 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
     // Report difference
     std::chrono::duration<double> elapsed_seconds = end-start;
-    result = elapsed_seconds.count();
+    time_result = elapsed_seconds.count();
 
-    sout<<result;
+    sout<<check_result<<" "<<time_result;
 
     return true;
 
