@@ -44,7 +44,6 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
     //Trim leading whitespaces
     std::string inp_arg = notrim_inp_arg.substr(notrim_inp_arg.find_first_not_of(' '));
-    std::cout<<"Input argument is "<<inp_arg<<std::endl;
 
     // Check if one word or two - Assume robot has DOF 
     size_t blank_count = std::count(inp_arg.begin(),inp_arg.end(),' ');
@@ -54,7 +53,6 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
         // Get body name
         std::string body_name(inp_arg);
         OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
-        std::cout<<method_name<<" - "<<body_name<<std::endl;
 
         if (method_name == "CheckCollision")
         {
@@ -80,8 +78,6 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
         std::string object_name = inp_arg.substr(first_blank_pos+1);
         OpenRAVE::KinBodyConstPtr object = GetEnv() -> GetKinBody(object_name);
-
-        std::cout<<method_name<<" - "<<body_name<<" "<<object_name<<std::endl;
 
         //Method name must be CheckCollision
         start = std::chrono::high_resolution_clock::now();
