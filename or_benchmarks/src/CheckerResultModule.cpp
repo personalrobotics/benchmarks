@@ -21,7 +21,6 @@ CheckerResultModule::~CheckerResultModule() {
 
 bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
-    std::cout << "IN EVAL CHECK METHOD!" <<std::endl;
     // Obtain checker for environment
     OpenRAVE::CollisionCheckerBasePtr checker_ptr = GetEnv() -> GetCollisionChecker();
 
