@@ -40,7 +40,6 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
     std::string check_log_json_string;
     std::getline(sin,check_log_json_string);
 
-    std::cout << "JSON String - " << check_log_json_string << std::endl;
 
     picojson::value check_log_val;
     std::string err = picojson::parse(check_log_val,check_log_json_string);
