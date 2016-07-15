@@ -2,6 +2,7 @@
 #define CHECKER_RESULT_MODULE_H
 
 #include <openrave/openrave.h>
+#include <benchmarks/picojson.h>
 
 namespace benchmarks {
 
@@ -15,6 +16,11 @@ public:
 private:
 
     bool EvaluateCheck(std::ostream &out, std::istream &in);
+    OpenRAVE::KinBodyConstPtr DeserializeKinBody(std::string keyname, picojson::value val);
+    OpenRAVE::KinBody::LinkConstPtr DeserializeLink(std::string keyname, picojson::value val);
+    std::vector<OpenRAVE::KinBodyConstPtr> DeserializeKinBodyList(std::string keyname, picojson::value val);
+    std::vector<OpenRAVE::KinBody::LinkConstPtr> DeserializeLinkList(std::string keyname, picojson::value check_log_val);
+
 };
 
 }
