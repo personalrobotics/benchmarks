@@ -148,6 +148,15 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
         end = std::chrono::high_resolution_clock::now();
     }
 
+    else if (methodname == "CheckStandaloneSelfCollisionBaked")
+    {
+        OpenRAVE::KinBodyConstPtr pbody = DeserializeKinBody("body",check_log_val);
+
+        start = std::chrono::high_resolution_clock::now();
+        check_result = checker_ptr -> CheckStandaloneSelfCollision(pbody);
+        end = std::chrono::high_resolution_clock::now();
+    }
+
     else
     {
         throw std::runtime_error("Unknown method - "+methodname);
