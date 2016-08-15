@@ -8,6 +8,15 @@
 
 using namespace benchmarks;
 
+/*
+OpenRAVE Plugin that takes the log of a collision checker
+in the format specified by or_stub_checker and replays
+it with the collision checker of the environment.
+The time and result is sent to the output stream
+*/
+
+
+
 CheckerResultModule::CheckerResultModule(OpenRAVE::EnvironmentBasePtr env)
     : ModuleBase(env) {
 
