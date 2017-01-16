@@ -1,3 +1,5 @@
+import yaml
+
 class BenchmarkQuery(object):
         
     def __init__(self, planning_method=None, env=None, args=None, kwargs=None):
@@ -32,34 +34,35 @@ class BenchmarkQuery(object):
             query['args'] = serialize(self.args)
 
         if self.kwargs:
-            query['kwargs'] = serialize(self.kwargs)
+            query['kw_args'] = serialize(self.kwargs)
 
         if self.planning_method:
-            query['planning_method'] = serialize(self.planning_method)
+            query['method'] = serialize(self.planning_method)
 
         return query
 
     def from_yaml(self, query_yaml, env=None, robot=None):
         """
-        @param query_yaml The query in yaml format
+        @param query_yaml Yaml file containing query data
         @param env The environment to deserialize into, if None 
           a new environment is created
         @param robot The robot to use (if None, the robot is 
           loaded as part of deserialization)
         """
+
         from prpy.serialization import deserialize_environment, deserialize
 
-        serialized_env = query_yaml.get('env', None)
+        with open(query_yaml, 'r') as f:
+            query = yaml.load(f.read())
+
+        serialized_env = query.get('environment', None)
         if serialized_env:
             reuse_bodies = [ robot ] if robot is not None else list()
             self.env = deserialize_environment(serialized_env, env=env, reuse_bodies=reuse_bodies)
 
-        self.planning_method=query_yaml.get('planning_method', None)
+        self.planning_method = query.get('planning_method', None)
 
-        serialized_args = query_yaml.get('args', list())
-        if serialized_args:
-            self.args = deserialize(self.env, serialized_args)
-
-        serialized_kwargs = query_yaml.get('kwargs', dict())
-        if serialized_kwargs:
-            self.kwargs = deserialize(self.env, serialized_kwargs)
+        request = query.get('request')
+        self.args = request['args']
+        self.kwargs = request['kw_args']
+        self.planning_method = request['method']
