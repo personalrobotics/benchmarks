@@ -16,7 +16,6 @@
   <build_depend>moveit_ros_planning_interface</build_depend>
   <build_depend>yaml-cpp</build_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>gperftools_21</run_depend>
   <run_depend>moveit_core</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
   <run_depend>yaml-cpp</run_depend>

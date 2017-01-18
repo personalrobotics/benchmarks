@@ -3,15 +3,14 @@ project(moveit_benchmarks)
 
 find_package(catkin REQUIRED COMPONENTS
     roscpp
+    moveit_core
+    moveit_ros_planning_interface
 )
 
 catkin_package()
 
 find_package(Boost REQUIRED COMPONENTS program_options system)
-find_package(catkin COMPONENTS
-    moveit_core
-    moveit_ros_planning_interface
-)
+
 
 include(FindPkgConfig)
 pkg_check_modules(YamlCpp REQUIRED yaml-cpp)
@@ -31,16 +30,14 @@ link_directories(
     ${catkin_LIBRARY_DIRS}
 )
 
-# MoveIt plugin.
-if (MOVEIT_CORE_FOUND)
-    add_executable(run_moveit_benchmark
-        src/MoveItModule.cpp
-    )
-    target_link_libraries(run_moveit_benchmark
-        ${catkin_LIBRARIES}
-        ${YamlCpp_LIBRARIES}
-    )
-    install(TARGETS run_moveit_benchmark
-        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-    )
-endif (MOVEIT_CORE_FOUND)
+
+add_executable(run_moveit_benchmark
+    src/MoveItModule.cpp
+)
+target_link_libraries(run_moveit_benchmark
+    ${catkin_LIBRARIES}
+    ${YamlCpp_LIBRARIES}
+)
+install(TARGETS run_moveit_benchmark
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
