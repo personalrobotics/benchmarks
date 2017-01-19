@@ -6,6 +6,7 @@
 #include <exception>
 #include <algorithm>
 
+
 using namespace benchmarks;
 
 /*
@@ -31,7 +32,7 @@ CheckerResultModule::~CheckerResultModule() {
 bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
     // Obtain checker for environment
-    OpenRAVE::CollisionCheckerBasePtr checker_ptr = GetEnv() -> GetCollisionChecker();
+    OpenRAVE::CollisionCheckerBasePtr checker_ptr = GetEnv()->GetCollisionChecker();
 
     if (!checker_ptr)
     {
@@ -45,19 +46,18 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
 
     // Now read the JSON string and parse it
-    std::string check_log_json_string;
-    std::getline(sin,check_log_json_string);
+    std::string check_log_json_string(std::istreambuf_iterator<char>(sin),{});
 
 
     picojson::value check_log_val;
     std::string err = picojson::parse(check_log_val,check_log_json_string);
     if(!err.empty()){
-        throw std::runtime_error(err);
+        throw OpenRAVE::openrave_exception(err);
     }
 
     // Conver to object
     if( ! check_log_val.is<picojson::object>()){
-        throw std::runtime_error("JSON stream is not an object!");
+        throw OpenRAVE::openrave_exception("JSON stream is not an object!");
     }
 
     // First get methodname
@@ -168,10 +168,10 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
     else
     {
-        throw std::runtime_error("Unknown method - "+methodname);
+        throw OpenRAVE::openrave_exception("Unknown method - "+methodname);
     }
 
-    std::chrono::duration<double> elapsed_seconds = end-start;
+    std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(end-start);
     time_result = elapsed_seconds.count();
 
     sout<<check_result<<" "<<time_result;
@@ -185,6 +185,11 @@ OpenRAVE::KinBodyConstPtr CheckerResultModule::DeserializeKinBody(std::string ke
 {
     std::string body_name(check_log_val.get(keyname).get<std::string>());
     OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
+
+    if(!pbody){
+        throw OpenRAVE::openrave_exception("Kinbody name invalid for environment");
+    }
+
     return pbody;
 }
 
@@ -200,6 +205,10 @@ OpenRAVE::KinBody::LinkConstPtr CheckerResultModule::DeserializeLink(std::string
     OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
     OpenRAVE::KinBody::LinkConstPtr plink = pbody -> GetLink(link_name);
 
+    if(!plink){
+        throw OpenRAVE::openrave_exception("Link name "+link_name+" not in kinbody "+body_name);
+    }
+
     return plink;
 }
 
@@ -211,7 +220,11 @@ std::vector<OpenRAVE::KinBodyConstPtr> CheckerResultModule::DeserializeKinBodyLi
 
     for (auto val : val_arr)
     {
-        OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(val.get<std::string>());
+        std::string body_name(val.get<std::string>());
+        OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
+        if(!pbody){
+            throw OpenRAVE::openrave_exception("Kinbody name "+body_name+" invalid for environment");
+        }
         vbodies.push_back(pbody);
     }
 
@@ -235,6 +248,10 @@ std::vector<OpenRAVE::KinBody::LinkConstPtr> CheckerResultModule::DeserializeLin
 
         OpenRAVE::KinBodyConstPtr pbody = GetEnv() -> GetKinBody(body_name);
         OpenRAVE::KinBody::LinkConstPtr plink = pbody -> GetLink(link_name);
+
+        if(!plink){
+            throw OpenRAVE::openrave_exception("Link name "+link_name+" not in kinbody "+body_name);
+        }
 
         vlinks.push_back(plink);
     }
