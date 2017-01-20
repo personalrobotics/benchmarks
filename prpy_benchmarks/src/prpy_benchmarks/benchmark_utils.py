@@ -4,10 +4,11 @@ logger = logging.getLogger('prpy_benchmarks')
 class BenchmarkException(Exception):
     pass
 
-def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None):
+def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=None, robot=None, outfile=None):
     """
     @param queryfile The file containing the query to execute
     @param plannerfile The file containing metadata about the planner to use
+    @param log_collision_checks Whether or not to log collision checks
     @param env The env to run the query against (if None a new env 
       is created)
     @param robot The robot to use (if None, the robot is loaded as 
@@ -15,6 +16,7 @@ def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None
     @param outdir If not none, the file where the result should be written
     """
     import yaml
+    import openravepy
 
     # Load the query
     from .query import BenchmarkQuery
@@ -34,6 +36,11 @@ def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None
                           planner_metadata.planner_class_name,
                           **planner_metadata.planner_parameters)
 
+    #Set to stubchecker if collisions to be logged
+    if log_collision_checks:
+        stubchecker = openravepy.RaveCreateCollisionChecker(env,'stubchecker')
+        env.SetCollisionChecker(stubchecker)
+
     # Get the planning method from the planner
     planning_method = getattr(planner, query.planning_method)
 
@@ -49,22 +56,42 @@ def execute_benchmark(queryfile, plannerfile, env=None, robot=None, outfile=None
             path = None
     plan_time = timer.get_duration()
 
-    # Create a result object
-    from .result import BenchmarkResult
-    from os.path import basename
+    if not log_collision_checks:
+        # Create a result object
+        from .result import BenchmarkResult
+        from os.path import basename
 
-    result = BenchmarkResult(queryfile=basename(queryfile), 
-                             query_md5=to_md5(queryfile),
-                             plannerfile=basename(plannerfile),
-                             planner_data_md5=to_md5(plannerfile),
-                             time=plan_time, 
-                             success=success, 
-                             path=path)
-    
-    if outfile is not None:
-        with open(outfile, 'w') as f:
-            f.write(yaml.dump(result.to_yaml()))
-        logger.info('Results written to file %s', outfile)
+        result = BenchmarkResult(queryfile=basename(queryfile), 
+                                 query_md5=to_md5(queryfile),
+                                 plannerfile=basename(plannerfile),
+                                 planner_data_md5=to_md5(plannerfile),
+                                 time=plan_time, 
+                                 success=success, 
+                                 path=path)
+
+        # Save to yaml
+        if outfile is not None:
+            with open(outfile, 'w') as f:
+                f.write(yaml.dump(result.to_yaml()))
+            logger.info('Results written to file %s', outfile)
+
+    else:
+        from .result import BenchmarkCollisionResult
+        import json
+
+        # Request collision check logs from stubchecker
+        check_info = stubchecker.SendCommand('GetLogInfo')
+        check_info_dict = json.loads(check_info)
+        stubchecker.SendCommand('Reset')
+
+        result = BenchmarkCollisionResult(environment=env,
+                                          collision_log=check_info_dict)
+
+        # Save to json
+        if outfile is not None:
+            with open(outfile,'w') as f:
+                json.dump(result.to_dict(),f)
+            logger.info('Results written to file %s',outfile)
     
     return result
 
