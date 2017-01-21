@@ -59,3 +59,38 @@ class BenchmarkResult(object):
 
         # TODO: Load in the path
 
+
+class BenchmarkCollisionResult(object):
+
+  def __init__(self,environment=None,collision_log=None):
+    """
+    @param environment The OpenRAVE environment to do the
+      collision check in
+    @param collision_log The output stream of the stub
+      collision checker as a dictionary
+    """
+    self.environment = environment
+    self.collision_log = collision_log
+
+  def to_dict(self):
+    """
+    Serialize this to a python dictionary
+    """
+    import prpy.serialization
+
+    envdict = prpy.serialization.serialize_environment(self.environment)
+    collresultdict = {'environment' : envdict, 'collision_log' : self.collision_log}
+
+    return collresultdict
+
+  def from_dict(self,collresultdict,env):
+    """
+    @param collresultdict The dictionary obtained from a collision check logfile
+    @param env The environment to deserialize into, if None then a
+      new environment is created
+    """
+
+    import prpy.serialization
+    envdict = collresultdict['environment']
+    self.env = prpy.serialization.deserialize_environment(envdict,env=env)
+    self.collision_log = collresultdict['collision_log']
