@@ -102,18 +102,21 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     return result
 
 
-def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
+def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
                                      option_dofs='active',env_first = True, 
-                                     env_first_outfile=None, self_first_outfile=None): 
+                                     env_outfile=None, self_outfile=None): 
     """
-    Expects a special format that has only the list of relevant DOFs done for
-    self and env collisions. Default order is env check first, then self check,
-    for both logging and evaluating
+    Runs the specified collision checking engine on the log from execute_benchmark.
+    Expects a special format that has only the list of relevant DOF sets checked for
+    self and env collisions, for a given environment. It only accepts the format
+    output by the execute. The default order is env check first, 
+    then self check, for both logging and evaluating
     @param engine The collision checker engine to use (ODE/PQP/FCL)
     @param robot_name The name of the robot to check for 
     @param collresultfile The name of the file that has the environment and logged checks 
     @param option_dofs Whether to check with Active DOFs or all DOFs
-    @param outfile The file to save results too
+    @param env_outfile The file to save results to for environment-only checks 
+    @param self_outfile The file to save results to for self-only checks
     """
     import json
     import openravepy
@@ -198,16 +201,15 @@ def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
 
     # Save to file
     if outfile is not None:
-        with open(env_first_outfile,'w') as fout:
+        with open(env_outfile,'w') as fout:
             json.dump(env_performance_dict,fout)
-        with open(self_first_outfile,'w') as fout:
+        with open(self_outfile,'w') as fout:
             json.dump(self_performance_dict,fout)
 
         logger.info('Collision Benchmarking Results written to files')
 
 
 def get_relevant_DOF_list(check_info_dict):
-
     """
     From the output of stub_checker, get the unique sets of
     DOFs that are queried for self and env checks
