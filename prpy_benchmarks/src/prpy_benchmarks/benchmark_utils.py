@@ -18,6 +18,9 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     import yaml
     import openravepy
 
+    # TODO Currently for a single planner only
+    # TODO Responsibility for doing for multiple planners with higher level user
+
     # Load the query
     from .query import BenchmarkQuery
     query = BenchmarkQuery()
@@ -84,8 +87,11 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
         check_info_dict = json.loads(check_info)
         stubchecker.SendCommand('Reset')
 
+        # Save only the relevant DOF values used for self+env checks
+        relevant_dof_list = get_relevant_DOF_list(check_info_dict)
+
         result = BenchmarkCollisionResult(environment=env,
-                                          collision_log=check_info_dict)
+                                          collision_log=relevant_dof_list)
 
         # Save to json
         if outfile is not None:
@@ -96,10 +102,13 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     return result
 
 
-def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,option_dofs='active',outfile=None): 
+def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
+                                     option_dofs='active',env_first = True, 
+                                     env_first_outfile=None, self_first_outfile=None): 
     """
     Expects a special format that has only the list of relevant DOFs done for
-    self and env collisions. Default order is env check first, then self check
+    self and env collisions. Default order is env check first, then self check,
+    for both logging and evaluating
     @param engine The collision checker engine to use (ODE/PQP/FCL)
     @param robot_name The name of the robot to check for 
     @param collresultfile The name of the file that has the environment and logged checks 
@@ -126,11 +135,9 @@ def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,optio
     # Get robot
     robot = collresult.environment.GetRobot(robot_name)
 
-    # Setup checker performance dict
-    performance_dict = dict()
-    performance_dict['elapsed_sec'] = 0.0
-    performance_dict['checks'] = 0
-    performance_dict['data'] = {'times':list(),'check_results':list()}
+    # Lists for noting elapsed time and check result
+    time_list = list()
+    result_list = list()
 
     # Lock openrave environment
     with collresult.environment:
@@ -175,17 +182,107 @@ def execute_collisioncheck_benchmark(engine,robot_name,collresultfile=None,optio
                 single_check_time = float(check_time[1])
 
                 # Update performance_dict
-                performance_dict['checks'] += 1
-                performance_dict['elapsed_sec'] += single_check_time
-                performance_dict['data']['times'].append(single_check_time)
-                performance_dict['data']['check_results'].append(single_check_result)
+                time_list.append(single_check_time)
+                result_list.append(single_check_result)
+
+
+    # Save depending on env first or self first
+    if env_first:
+        env_times, self_times = split_by_env_first(time_list,result_list)
+    else:
+        self_times, env_times = split_by_self_first(time_list,result_list)
+
+    # Separate dictionaries for env and self first
+    env_performance_dict = {'checks':len(env_times),'elapsed_sec':sum(env_times),'data':{'times':env_times}}
+    self_performance_dict = {'checks':len(self_times),'elapsed_sec':sum(self_times),'data':{'times':self_times}}
 
     # Save to file
     if outfile is not None:
-        with open(outfile,'w') as fout:
-            json.dump(performance_dict.fout)
-        logger.info('Results written to file %s',outfile)
+        with open(env_first_outfile,'w') as fout:
+            json.dump(env_performance_dict,fout)
+        with open(self_first_outfile,'w') as fout:
+            json.dump(self_performance_dict,fout)
 
+        logger.info('Collision Benchmarking Results written to files')
+
+
+def get_relevant_DOF_list(check_info_dict):
+
+    """
+    From the output of stub_checker, get the unique sets of
+    DOFs that are queried for self and env checks
+    @ param check_info_dict The dictionary of collision check information
+        obtained from a single run of or_stub_checker
+    """
+    n_keys = len(check_info_dict.keys())
+    prev_method_name = ''
+    relevant_DOF_list = list()
+
+    for i in range(1,n_keys+1):
+
+        check_key = str(i)
+        if check_key in check_info_dict.keys():
+            
+            record = check_info_dict[key]
+            method_name = record['methodname']
+            
+            if method_name == 'CheckStandaloneSelfCollision':
+                if prev_method_name == 'CheckCollision_body_env':
+
+                    # Relevant DOF set; record in list
+                    relevant_DOF_list.append(check_info_dict[key]['dofvals'])
+        
+            prev_method_name = method_name
+
+    return relevant_DOF_list
+
+
+def split_by_env_first(time_list,result_list):
+    """
+    Split the elapsed time for checks and the result of the check,
+    assuming the environment check is first
+    @param time_list The list of elapsed times
+    @param result_list The corresponding list of check results
+    """
+
+    self_times = list()
+    env_times = list()
+
+    n_vals = len(result_list)
+
+    for i in range(n_vals/2):
+
+        # Env time is every (2*i)th and self is (2*i+1)th
+        env_times.append(time_list[2*i])
+        if res_list[2*i] == False:
+            # Needed to check self too to verify
+            self_times.append(time_list[2*i+1])
+
+    return env_times, self_times
+
+
+def split_by_self_first(time_list,result_list):
+    """
+    Split the elapsed time for checks and the result of the check,
+    assuming the self-collision check is first
+    @param time_list The list of elapsed times
+    @param result_list The corresponding list of check results
+    """
+
+    self_times = list()
+    env_times = list()
+
+    n_vals = len(result_list)
+
+    for i in range(n_vals/2):
+
+        # Env time is every (2*i)th and self is (2*i+1)th
+        self_times.append(time_list[2*i]+1)
+        if res_list[2*i+1] == False:
+            # Needed to check env too to verify
+            env_times.append(time_list[2*i])
+
+    return self_times, env_times
 
 
 def to_md5(filename):
