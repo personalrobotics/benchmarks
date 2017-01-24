@@ -14,6 +14,12 @@ OpenRAVE Plugin that takes the log of a collision checker
 in the format specified by or_stub_checker and replays
 it with the collision checker of the environment.
 The time and result is sent to the output stream
+
+TODO : Additional error checking for JSON fields.
+For instance, the CheckCollision_body_with_exclusions
+method should have the relevant fields, if not, a runtime
+error is thrown currently.
+
 */
 
 
@@ -133,11 +139,13 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
         start = std::chrono::high_resolution_clock::now();
         check_result = checker_ptr -> CheckCollision(plink, vbodiesexcluded, vlinksexcluded);
+        
         end = std::chrono::high_resolution_clock::now();
     }
 
     else if (methodname == "CheckCollision_body_with_exclusions")
     {
+
         OpenRAVE::KinBodyConstPtr pbody = DeserializeKinBody("body",check_log_val);
 
         std::vector<OpenRAVE::KinBodyConstPtr> vbodiesexcluded = DeserializeKinBodyList("bodies_excluded",check_log_val);
@@ -145,13 +153,13 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
 
         start = std::chrono::high_resolution_clock::now();
         check_result = checker_ptr -> CheckCollision(pbody, vbodiesexcluded, vlinksexcluded);
+        check_result = checker_ptr -> CheckCollision(pbody);
         end = std::chrono::high_resolution_clock::now();
     }
 
     else if (methodname == "CheckStandaloneSelfCollision")
     {
         OpenRAVE::KinBodyConstPtr pbody = DeserializeKinBody("body",check_log_val);
-
         start = std::chrono::high_resolution_clock::now();
         check_result = checker_ptr -> CheckStandaloneSelfCollision(pbody);
         end = std::chrono::high_resolution_clock::now();
@@ -171,7 +179,7 @@ bool CheckerResultModule::EvaluateCheck(std::ostream &sout, std::istream &sin) {
         throw OpenRAVE::openrave_exception("Unknown method - "+methodname);
     }
 
-    std::chrono::duration<double> elapsed_seconds = std::chrono::duration_cast<std::chrono::seconds>(end-start);
+    std::chrono::duration<double> elapsed_seconds = end-start;
     time_result = elapsed_seconds.count();
 
     sout<<check_result<<" "<<time_result;

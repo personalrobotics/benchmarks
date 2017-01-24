@@ -132,13 +132,15 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
     output by the execute. The default order is env check first, 
     then self check, for both logging and evaluating
     @param engine The collision checker engine to use (ODE/PQP/FCL)
+    @param env The OpenRAVe environment to use
     @param robot The OpenRAVe robot to use
     @param collresultfile The name of the file that has the environment and logged checks 
     @param option_dofs Whether to check with Active DOFs or all DOFs
-    @param env_outfile The file to save results to for environment-only checks 
-    @param self_outfile The file to save results to for self-only checks
+    @param env_outfile The YAML file to save results to for environment-only checks 
+    @param self_outfile The YAML file to save results to for self-only checks
     """
     import json
+    import yaml
     import openravepy
     import atexit
     from .result import BenchmarkCollisionResult
@@ -165,7 +167,7 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
     with env:
 
         # Create module to evaluate check time
-        checkermodule = openravepy.RaveCreateModule(env,'checkerresultmoduleadd ')
+        checkermodule = openravepy.RaveCreateModule(env,'CheckerResultModule')
 
         # Set collision checker to evaluate
         cc = openravepy.RaveCreateCollisionChecker(env,engine)
@@ -186,7 +188,7 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
             # Specify env and self check methods
             standalone_checklog_dict = {'methodname': 'CheckStandaloneSelfCollision',
                                 'body' : robot.GetName()}
-            body_env_checklog_dict = {'methodname' : 'CheckCollision_body_with_exclusions',
+            body_env_checklog_dict = {'methodname' : 'CheckCollision_body',
                                 'body' : robot.GetName()}
 
             check_order = [body_env_checklog_dict,standalone_checklog_dict]
@@ -194,19 +196,24 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
             for spec_dict in check_order:
 
                 check_specs_str = json.dumps(spec_dict)
+                
                 string_command = 'EvaluateCheck '+check_specs_str
                 check_and_time_str = checkermodule.SendCommand(string_command)
                 check_and_time = check_and_time_str.split(' ')
 
+
                 single_check_result = False
                 if int(check_and_time[0]) == 1:
                     single_check_result = True
-                single_check_time = float(check_time[1])
+                single_check_time = float(check_and_time[1])
 
                 # Update performance_dict
                 time_list.append(single_check_time)
                 result_list.append(single_check_result)
 
+    #Reject the first pair as they are misleading
+    time_list = time_list[2:]
+    result_list = result_list[2:]
 
     # Save depending on env first or self first
     if env_first:
@@ -219,11 +226,11 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
     self_performance_dict = {'checks':len(self_times),'elapsed_sec':sum(self_times),'data':{'times':self_times}}
 
     # Save to file
-    if outfile is not None:
+    if env_outfile is not None and self_outfile is not None:
         with open(env_outfile,'w') as fout:
-            json.dump(env_performance_dict,fout)
+            yaml.dump(env_performance_dict,fout)
         with open(self_outfile,'w') as fout:
-            json.dump(self_performance_dict,fout)
+            yaml.dump(self_performance_dict,fout)
 
         logger.info('Collision Benchmarking Results written to files')
 
@@ -248,7 +255,7 @@ def get_relevant_DOF_list(check_info_dict):
             method_name = record['methodname']
             
             if method_name == 'CheckStandaloneSelfCollision':
-                if prev_method_name == 'CheckCollision_body_with_exclusions':
+                if prev_method_name == 'CheckCollision_body':
 
                     # Relevant DOF set; record in list
                     relevant_DOF_list.append(check_info_dict[check_key]['dofvals'])
@@ -275,7 +282,7 @@ def split_by_env_first(time_list,result_list):
 
         # Env time is every (2*i)th and self is (2*i+1)th
         env_times.append(time_list[2*i])
-        if res_list[2*i] == False:
+        if result_list[2*i] == False:
             # Needed to check self too to verify
             self_times.append(time_list[2*i+1])
 
@@ -299,7 +306,7 @@ def split_by_self_first(time_list,result_list):
 
         # Env time is every (2*i)th and self is (2*i+1)th
         self_times.append(time_list[2*i]+1)
-        if res_list[2*i+1] == False:
+        if result_list[2*i+1] == False:
             # Needed to check env too to verify
             env_times.append(time_list[2*i])
 
