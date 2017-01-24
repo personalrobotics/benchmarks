@@ -165,7 +165,7 @@ def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=
     with env:
 
         # Create module to evaluate check time
-        checkermodule = openravepy.RaveCreateModule(env,'checkerresultmodule')
+        checkermodule = openravepy.RaveCreateModule(env,'checkerresultmoduleadd ')
 
         # Set collision checker to evaluate
         cc = openravepy.RaveCreateCollisionChecker(env,engine)
