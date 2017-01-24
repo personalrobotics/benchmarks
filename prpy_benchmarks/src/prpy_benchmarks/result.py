@@ -83,7 +83,7 @@ class BenchmarkCollisionResult(object):
 
     return collresultdict
 
-  def from_dict(self,collresultdict,env):
+  def from_dict(self,collresultdict,env=None,robot=None):
     """
     @param collresultdict The dictionary obtained from a collision check logfile
     @param env The environment to deserialize into, if None then a
@@ -92,5 +92,7 @@ class BenchmarkCollisionResult(object):
 
     import prpy.serialization
     envdict = collresultdict['environment']
-    self.env = prpy.serialization.deserialize_environment(envdict,env=env)
+    if envdict:
+      reuse_bodies = [ robot ] if robot is not None else list()
+      self.environment = prpy.serialization.deserialize_environment(envdict, env=env, reuse_bodies=reuse_bodies)
     self.collision_log = collresultdict['collision_log']

@@ -17,6 +17,9 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     """
     import yaml
     import openravepy
+    from prpy.planning import NamedPlanner
+    import prpy.serialization
+
 
     # TODO Currently for a single planner only
     # TODO Responsibility for doing for multiple planners with higher level user
@@ -24,8 +27,9 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     # Load the query
     from .query import BenchmarkQuery
     query = BenchmarkQuery()
-    with open(queryfile, 'r') as f:
-        query.from_yaml(yaml.load(f.read()), env=env, robot=robot)
+    
+    query.from_yaml(queryfile, env=env, robot=robot)
+
 
     # Load the planner metadata
     from .planner import BenchmarkPlannerMetadata
@@ -39,13 +43,28 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
                           planner_metadata.planner_class_name,
                           **planner_metadata.planner_parameters)
 
-    #Set to stubchecker if collisions to be logged
-    if log_collision_checks:
-        stubchecker = openravepy.RaveCreateCollisionChecker(env,'stubchecker')
-        env.SetCollisionChecker(stubchecker)
+    # Create a named planner 
+    named_planner = NamedPlanner(delegate_planner=planner)
+
 
     # Get the planning method from the planner
-    planning_method = getattr(planner, query.planning_method)
+    try:
+        planning_method = getattr(named_planner, query.planning_method)
+    except AttributeError:
+        raise RuntimeError('That planner does not support planning method {}!'.format(query.planning_method))
+
+    # Get robot from query args
+    method_args = []
+    for method_arg in query.args:
+        method_args.append(prpy.serialization.deserialize(env,method_arg))
+    method_kwargs = {}
+    for key,value in query.kwargs.items():
+        method_kwargs[key] = prpy.serialization.deserialize(env,value)
+
+    #Set to stubchecker if collisions to be logged
+    if log_collision_checks:
+        stubchecker = openravepy.RaveCreateCollisionChecker(env,'stub_checker')
+        env.SetCollisionChecker(stubchecker)
 
     # Execute with timing
     from prpy.planning import PlanningError
@@ -53,7 +72,7 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     with Timer() as timer:
         try:
             success = True
-            path = planning_method(*query.args, **query.kwargs)
+            path = planning_method(*method_args, **method_kwargs)
         except PlanningError as e:
             success = False
             path = None
@@ -87,6 +106,7 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
         check_info_dict = json.loads(check_info)
         stubchecker.SendCommand('Reset')
 
+
         # Save only the relevant DOF values used for self+env checks
         relevant_dof_list = get_relevant_DOF_list(check_info_dict)
 
@@ -102,7 +122,7 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
     return result
 
 
-def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
+def evaluate_collisioncheck_benchmark(engine,env=None,robot=None,collresultfile=None,
                                      option_dofs='active',env_first = True, 
                                      env_outfile=None, self_outfile=None): 
     """
@@ -112,7 +132,7 @@ def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
     output by the execute. The default order is env check first, 
     then self check, for both logging and evaluating
     @param engine The collision checker engine to use (ODE/PQP/FCL)
-    @param robot_name The name of the robot to check for 
+    @param robot The OpenRAVe robot to use
     @param collresultfile The name of the file that has the environment and logged checks 
     @param option_dofs Whether to check with Active DOFs or all DOFs
     @param env_outfile The file to save results to for environment-only checks 
@@ -121,29 +141,28 @@ def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
     import json
     import openravepy
     import atexit
+    from .result import BenchmarkCollisionResult
 
     if collresultfile is None:
         raise Exception('No valid collision log file specified')
 
     openravepy.RaveInitialize(True, level=openravepy.DebugLevel.Info)
-    atexit.register(openravepy.RaveDestroy)
-    env = openravepy.Environment()
-    atexit.register(env.Destroy)
 
     with open(collresultfile,'r') as fin:
         collresultdict = json.load(fin)
         collresult = BenchmarkCollisionResult()
-        collresult.from_dict(collresultdict,env)
+        collresult.from_dict(collresultdict,env,robot)
 
-    # Get robot
-    robot = collresult.environment.GetRobot(robot_name)
 
     # Lists for noting elapsed time and check result
     time_list = list()
     result_list = list()
 
+    if not robot:
+        robot = env.GetRobots()[0]
+
     # Lock openrave environment
-    with collresult.environment:
+    with env:
 
         # Create module to evaluate check time
         checkermodule = openravepy.RaveCreateModule(env,'checkerresultmodule')
@@ -157,7 +176,7 @@ def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
 
         if cc is None:
             raise Exception('Invalid collision engine. Failing.')
-        env.SetCollisionchecker(cc)
+        env.SetCollisionChecker(cc)
 
         for dof_vals in collresult.collision_log:
 
@@ -166,9 +185,9 @@ def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
 
             # Specify env and self check methods
             standalone_checklog_dict = {'methodname': 'CheckStandaloneSelfCollision',
-                                'body' : robot_name}
-            body_env_checklog_dict = {'methodname' : 'CheckCollision_body_env',
-                                'body' : robot_name}
+                                'body' : robot.GetName()}
+            body_env_checklog_dict = {'methodname' : 'CheckCollision_body_with_exclusions',
+                                'body' : robot.GetName()}
 
             check_order = [body_env_checklog_dict,standalone_checklog_dict]
 
@@ -176,7 +195,7 @@ def evaluate_collisioncheck_benchmark(engine,robot_name,collresultfile=None,
 
                 check_specs_str = json.dumps(spec_dict)
                 string_command = 'EvaluateCheck '+check_specs_str
-                check_and_time_str = module.SendCommand(string_command)
+                check_and_time_str = checkermodule.SendCommand(string_command)
                 check_and_time = check_and_time_str.split(' ')
 
                 single_check_result = False
@@ -225,14 +244,14 @@ def get_relevant_DOF_list(check_info_dict):
         check_key = str(i)
         if check_key in check_info_dict.keys():
             
-            record = check_info_dict[key]
+            record = check_info_dict[check_key]
             method_name = record['methodname']
             
             if method_name == 'CheckStandaloneSelfCollision':
-                if prev_method_name == 'CheckCollision_body_env':
+                if prev_method_name == 'CheckCollision_body_with_exclusions':
 
                     # Relevant DOF set; record in list
-                    relevant_DOF_list.append(check_info_dict[key]['dofvals'])
+                    relevant_DOF_list.append(check_info_dict[check_key]['dofvals'])
         
             prev_method_name = method_name
 

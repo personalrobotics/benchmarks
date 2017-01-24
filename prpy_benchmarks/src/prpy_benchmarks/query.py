@@ -53,7 +53,7 @@ class BenchmarkQuery(object):
         from prpy.serialization import deserialize_environment, deserialize
 
         with open(query_yaml, 'r') as f:
-            query = yaml.load(f.read())
+            query = yaml.load(f)
 
         serialized_env = query.get('environment', None)
         if serialized_env:
