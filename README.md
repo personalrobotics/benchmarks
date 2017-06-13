@@ -13,4 +13,4 @@ Internally, the method creates a logged collision checker via `or_stub_checker` 
 ## Collision Checker Evaluation
 Once you have a collision check query log from the previous stage, you may evaluate the collision checker engine of your choice on it. Refer to the `evaluate_collisioncheck_benchmark` method in `prpy_benchmarks/src/prpy_benchmarks/benchmark_utils.py`. For the `collresultfile` argument, provide a log file obtained from the previous step.
 
-The evaluator notes the time and the result '(True/False)' for the collision check by the specified checker engine. It also separately notes the time for a self-collision and an env-collision check. By default, only the activeDOFs are considered, and the env-collision is checked first (as it is typically shorter).
+The evaluator notes the time and the result `(True/False)` for the collision check by the specified checker engine. It also separately notes the time for a self-collision and an env-collision check. By default, only the activeDOFs are considered, and the env-collision is checked first (as it is typically shorter).
