@@ -25,6 +25,12 @@ A result contains metadata about the result of a benchmark. It is comprised of 7
 * path - The path output by the planning call
 
 ## Usage
+To generate planning queries, use `prpy.planning.logged.LoggedPlanner`:
+```python
+import prpy.planning.logged
+planner = prpy.planning.logged.LoggedPlanner(planner)
+```
+
 The following call can be used to execute the cartesian product of a set of queries and planner metadatas:
 ```shell
 $ rosrun prpy_benchmarks run_benchmarks.py --queryfiles queries/table_query_0.yaml --plannerfiles \
