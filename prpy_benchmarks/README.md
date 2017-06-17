@@ -25,7 +25,7 @@ A result contains metadata about the result of a benchmark. It is comprised of 7
 * path - The path output by the planning call
 
 ## Usage
-To generate planning queries, use `prpy.planning.logged.LoggedPlanner`:
+To generate planning queries, use `prpy.planning.logged.LoggedPlanner` as a metaplanner to wrap an existing planner:
 ```python
 import prpy.planning.logged
 planner = prpy.planning.logged.LoggedPlanner(planner)
