@@ -43,13 +43,10 @@ def execute_benchmark(queryfile, plannerfile, log_collision_checks=False, env=No
                           planner_metadata.planner_class_name,
                           **planner_metadata.planner_parameters)
 
-    # Create a named planner 
-    named_planner = NamedPlanner(delegate_planner=planner)
-
 
     # Get the planning method from the planner
     try:
-        planning_method = getattr(named_planner, query.planning_method)
+        planning_method = getattr(planner, query.planning_method)
     except AttributeError:
         raise RuntimeError('That planner does not support planning method {}!'.format(query.planning_method))
 
