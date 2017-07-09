@@ -7,6 +7,7 @@ import numpy
 import openravepy
 from prpy.planning.snap import SnapPlanner
 from prpy.planning.cbirrt import CBiRRTPlanner
+from prpy.planning.logged import LoggedPlanner
 
 ## Setup copied from prpy/tests/planning/planning_helpers.py
 
